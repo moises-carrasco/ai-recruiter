@@ -29,7 +29,9 @@ dist/
 # SQLite or local DBs (dev only)
 # If you want to include a demo DB later:
 #   !backend/app/db/demo.db
-backend/**/*.db
+*.db
+*.sqlite
+*.sqlite3
 
 # Pytest / Coverage / Cache
 .pytest_cache/
