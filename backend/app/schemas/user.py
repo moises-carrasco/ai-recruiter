@@ -23,6 +23,9 @@ class UserOut(BaseModel):
     last_name: str
     email: EmailStr
 
+    class Config:
+        from_attributes = True
+
 class UserListResponse(BaseModel):
     users: List[UserOut]
 
@@ -33,6 +36,3 @@ class UserFilter(BaseModel):
     name: Optional[str] = None  # Added name filter for compatibility
     page: int = Field(default=1, ge=1)
     per_page: int = Field(default=20, ge=1, le=100)
-
-    class Config:
-        orm_mode = True
