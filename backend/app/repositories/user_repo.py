@@ -8,34 +8,37 @@ from app.schemas.user import UserCreate, UserUpdate
 from fastapi import HTTPException, status
 
 class UserRepository:
-    async def create_user(self, db: Session, user_data: UserCreate):
-        user = User(**user_data.dict())
+    def create_user(self, db: Session, user_data: UserCreate):
+        # Convert UserCreate to dict and map password to password_hash
+        user_dict = user_data.dict()
+        user_dict['password_hash'] = user_dict.pop('password')
+        user = User(**user_dict)
         db.add(user)
-        await db.commit()
-        await db.refresh(user)
+        db.commit()
+        db.refresh(user)
         return user
 
-    async def get_by_id(self, db: Session, user_id: int):
+    def get_by_id(self, db: Session, user_id: int):
         return db.query(User).filter(User.id == user_id).first()
 
-    async def get_by_email(self, db: Session, email: str):
+    def get_by_email(self, db: Session, email: str):
         return db.query(User).filter(User.email == email).first()
 
-    async def update_user(self, db: Session, user: User, user_data: UserUpdate):
+    def update_user(self, db: Session, user: User, user_data: UserUpdate):
         for key, value in user_data.dict(exclude_unset=True).items():
             setattr(user, key, value)
-        await db.commit()
-        await db.refresh(user)
+        db.commit()
+        db.refresh(user)
         return user
 
-    async def delete_user(self, db: Session, user_id: int):
-        user = await self.get_by_id(db, user_id)
+    def delete_user(self, db: Session, user_id: int):
+        user = self.get_by_id(db, user_id)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
         user.is_active = False
-        await db.commit()
+        db.commit()
 
-    async def list_users(self, db: Session, filters):
+    def list_users(self, db: Session, filters):
         query = db.query(User)
         if filters.name:
             query = query.filter(User.first_name.contains(filters.name) | User.last_name.contains(filters.name))
@@ -45,5 +48,5 @@ class UserRepository:
             query = query.filter(User.is_active == filters.is_active)
         return query.offset((filters.page - 1) * filters.per_page).limit(filters.per_page).all()
 
-    async def search_by_name(self, db: Session, name: str, skip: int, limit: int):
+    def search_by_name(self, db: Session, name: str, skip: int, limit: int):
         return db.query(User).filter(User.first_name.contains(name) | User.last_name.contains(name)).offset(skip).limit(limit).all()

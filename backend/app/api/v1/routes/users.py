@@ -44,7 +44,7 @@ async def get_users(
         page=page,
         per_page=per_page
     )
-    return await service.list_users(db, filters)
+    return service.list_users(db, filters)
 
 
 @router.post("/", response_model=UserOut, status_code=status.HTTP_201_CREATED)
@@ -62,7 +62,7 @@ async def create_user(
     - **last_name**: User's last name (required)
     - **first_name**: User's first name (required)
     """
-    return await service.create_user(db, user_data)
+    return service.create_user(db, user_data)
 
 
 @router.get("/{user_id}", response_model=UserOut, status_code=status.HTTP_200_OK)
@@ -76,7 +76,7 @@ async def get_user_by_id(
     
     - **user_id**: The ID of the user to retrieve
     """
-    return await service.get_user_by_id(db, user_id)
+    return service.get_user_by_id(db, user_id)
 
 
 @router.put("/{user_id}", response_model=UserOut, status_code=status.HTTP_200_OK)
@@ -96,7 +96,7 @@ async def update_user(
     - **role**: Updated role (optional)
     - **is_active**: Updated active status (optional)
     """
-    return await service.update_user(db, user_id, user_data)
+    return service.update_user(db, user_id, user_data)
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -110,7 +110,7 @@ async def delete_user(
     
     - **user_id**: The ID of the user to delete
     """
-    await service.delete_user(db, user_id)
+    service.delete_user(db, user_id)
 
 
 @router.get("/search/by-name", response_model=List[UserOut], status_code=status.HTTP_200_OK)
@@ -128,4 +128,4 @@ async def search_users_by_name(
     - **skip**: Number of records to skip for pagination (default: 0)
     - **limit**: Maximum number of records to return (default: 100, max: 100)
     """
-    return await service.search_users_by_name(db, name, skip, limit)
+    return service.search_users_by_name(db, name, skip, limit)
