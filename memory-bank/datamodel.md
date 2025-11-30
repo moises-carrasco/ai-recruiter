@@ -1,5 +1,23 @@
 # Data Model
 
+## Database Source of Truth
+
+**IMPORTANT:** The authoritative source of truth for the database structure is the DDL script located at:
+`backend/db/schema.sql`
+
+This script contains:
+- Complete table definitions with all columns, constraints, and indexes
+- Foreign key relationships and referential integrity rules
+- Database triggers for automatic timestamp updates
+- Initial data population for lookup tables
+- Database views for common queries
+- Schema versioning and migration tracking
+
+**This document (datamodel.md) serves as conceptual documentation and reference only.**
+For any database structure changes, modifications must be made to the SQL script first, then this documentation should be updated to reflect those changes.
+
+---
+
 ## Entity Relationship Overview
 
 The system follows a relational database design with the following core entities and their relationships:
