@@ -36,6 +36,16 @@ const router = createRouter({
       path: '/interview/:link',
       name: 'interview-execution',
       component: () => import('../views/InterviewExecutionView.vue')
+    },
+    {
+      path: '/analytics',
+      name: 'analytics',
+      component: () => import('../views/AnalyticsView.vue')
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: () => import('../views/SettingsView.vue')
     }
   ]
 })

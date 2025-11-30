@@ -1,13 +1,12 @@
 <template>
-  <div id="app" class="min-h-screen bg-gray-50">
-    <!-- TODO: Implement main app layout -->
-    <!-- Navigation component -->
-    <!-- Router view for page content -->
-    <router-view />
+  <div id="app">
+    <MainLayout />
   </div>
 </template>
 
 <script setup>
+import MainLayout from './components/layout/MainLayout.vue'
+
 // TODO: Implement main app logic
 // - Authentication state management
 // - Global error handling
@@ -15,5 +14,5 @@
 </script>
 
 <style>
-/* TODO: Add global styles if needed */
+/* Global styles are handled by Tailwind CSS */
 </style>
