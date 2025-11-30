@@ -49,9 +49,12 @@ export const apiClient = {
   // Candidates
   getCandidates: (params) => api.get('/candidates', { params }),
   createCandidate: (data) => api.post('/candidates', data),
+  getCandidate: (id) => api.get(`/candidates/${id}`),
   updateCandidate: (id, data) => api.put(`/candidates/${id}`, data),
   deleteCandidate: (id) => api.delete(`/candidates/${id}`),
-  searchCandidates: (searchTerm) => api.get(`/candidates/search?q=${searchTerm}`),
+  searchCandidatesByName: (name, skip = 0, limit = 100) => 
+    api.get('/candidates/search/by-name', { params: { name, skip, limit } }),
+  getCandidateByEmail: (email) => api.get(`/candidates/email/${email}`),
 
   // Interviews
   getInterviews: (params) => api.get('/interviews', { params }),

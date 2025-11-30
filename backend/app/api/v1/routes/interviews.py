@@ -2,6 +2,10 @@
 Interview management and execution routes.
 """
 
+from fastapi import APIRouter
+
+router = APIRouter()
+
 # TODO: Implement interview endpoints
 # - GET /interviews (list interviews with filters)
 # - POST /interviews (create interview)
@@ -12,3 +16,8 @@ Interview management and execution routes.
 # - POST /interviews/{interview_id}/start (start interview)
 # - POST /interviews/{interview_id}/complete (complete interview)
 # - GET /interviews/{interview_id}/feedback (get interview feedback)
+
+@router.get("/health")
+async def interviews_health():
+    """Health check for interviews module."""
+    return {"status": "ok", "module": "interviews"}

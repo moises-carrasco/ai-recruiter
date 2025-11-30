@@ -2,6 +2,10 @@
 FastAPI main application entry point.
 """
 
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent))  # Agrega el root del proyecto al path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
