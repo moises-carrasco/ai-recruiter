@@ -7,6 +7,11 @@ The AI Technical Interview System follows a clean, professional, and accessible 
 
 ### Color Palette
 
+#### Application Shell Colors
+- **Header Blue:** `rgb(20, 20, 90)` or `#14145A` - Main header background
+- **Sidebar White:** `#FFFFFF` - Sidebar background
+- **Content Background:** `#F9FAFB` (gray-50) - Main content area background
+
 #### Primary Colors
 - **Primary Blue:** `#3B82F6` (blue-500) - Main actions, links, primary buttons
 - **Primary Dark:** `#1E40AF` (blue-800) - Hover states, active elements
@@ -236,74 +241,309 @@ The AI Technical Interview System follows a clean, professional, and accessible 
 </div>
 ```
 
+## Application Shell Layout
+
+### Base Application Structure
+
+The application follows a three-section layout with a blue header, white sidebar, and main content area:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ Header (Blue #14145A)                                   │
+│ App Name/Logo                              User Icon    │
+├──────────────┬──────────────────────────────────────────┤
+│ Sidebar      │ Main Content Area                        │
+│ (White)      │ (Light Gray Background)                  │
+│              │                                          │
+│ • Interviews │                                          │
+│ • Candidates │                                          │
+│ • Analytics  │                                          │
+│ • Settings   │                                          │
+│              │                                          │
+└──────────────┴──────────────────────────────────────────┘
+```
+
+### Application Shell Implementation
+
+**Complete Application Shell:**
+```html
+<div class="min-h-screen flex flex-col">
+  <!-- Header -->
+  <header class="h-16 flex items-center justify-between px-6" style="background-color: rgb(20, 20, 90);">
+    <!-- Left side - App Name/Logo -->
+    <div class="flex items-center">
+      <h1 class="text-xl font-bold text-white">Interview System</h1>
+      <!-- Alternative with logo -->
+      <!-- <img src="/logo.svg" alt="Interview System" class="h-8 w-auto"> -->
+    </div>
+    
+    <!-- Right side - User Menu -->
+    <div class="flex items-center">
+      <button class="p-2 text-white hover:bg-white hover:bg-opacity-10 rounded-full transition-colors duration-200">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+  
+  <div class="flex-1 flex">
+    <!-- Sidebar Navigation -->
+    <nav class="w-64 bg-white border-r border-gray-200 flex-shrink-0">
+      <div class="p-4">
+        <ul class="space-y-2">
+          <li>
+            <a href="/dashboard" class="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors duration-200">
+              <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+              </svg>
+              Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="/interviews" class="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors duration-200">
+              <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+              </svg>
+              Interviews
+            </a>
+          </li>
+          <li>
+            <a href="/candidates" class="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors duration-200">
+              <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path>
+              </svg>
+              Candidates
+            </a>
+          </li>
+          <li>
+            <a href="/analytics" class="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors duration-200">
+              <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
+              </svg>
+              Analytics
+            </a>
+          </li>
+          <li>
+            <a href="/settings" class="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors duration-200">
+              <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
+              </svg>
+              Settings
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    
+    <!-- Main Content Area -->
+    <main class="flex-1 bg-gray-50 overflow-auto">
+      <div class="p-6">
+        <!-- Page content goes here -->
+        <router-view />
+      </div>
+    </main>
+  </div>
+</div>
+```
+
+### Navigation States
+
+**Active Navigation Item:**
+```html
+<a href="/interviews" class="flex items-center px-3 py-2 text-blue-700 bg-blue-50 rounded-md font-medium">
+  <svg class="w-5 h-5 mr-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+    <!-- Icon SVG -->
+  </svg>
+  Interviews
+</a>
+```
+
+**Navigation Item with Badge:**
+```html
+<a href="/interviews" class="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100">
+  <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+    <!-- Icon SVG -->
+  </svg>
+  <span class="flex-1">Interviews</span>
+  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+    3
+  </span>
+</a>
+```
+
+### Responsive Behavior
+
+**Mobile Navigation (Collapsible Sidebar):**
+```html
+<!-- Mobile: Hidden sidebar with overlay -->
+<div class="lg:hidden">
+  <!-- Overlay -->
+  <div class="fixed inset-0 z-40 bg-gray-600 bg-opacity-75" v-show="sidebarOpen"></div>
+  
+  <!-- Sidebar -->
+  <nav class="fixed inset-y-0 left-0 z-50 w-64 bg-white transform transition-transform duration-300 ease-in-out" 
+       :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+    <!-- Sidebar content -->
+  </nav>
+</div>
+
+<!-- Desktop: Always visible sidebar -->
+<nav class="hidden lg:block w-64 bg-white border-r border-gray-200">
+  <!-- Sidebar content -->
+</nav>
+```
+
+**Mobile Header with Menu Button:**
+```html
+<header class="h-16 flex items-center justify-between px-4 lg:px-6" style="background-color: rgb(20, 20, 90);">
+  <div class="flex items-center">
+    <!-- Mobile menu button -->
+    <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden p-2 text-white hover:bg-white hover:bg-opacity-10 rounded-md mr-3">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
+    
+    <h1 class="text-xl font-bold text-white">Interview System</h1>
+  </div>
+  
+  <!-- User menu -->
+  <div class="flex items-center">
+    <button class="p-2 text-white hover:bg-white hover:bg-opacity-10 rounded-full">
+      <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+      </svg>
+    </button>
+  </div>
+</header>
+```
+
 ## Screen Layout Patterns
 
 ### Dashboard Layout
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ Header Navigation                                        │
-├─────────────────────────────────────────────────────────┤
-│ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐        │
-│ │ Metric  │ │ Metric  │ │ Metric  │ │ Metric  │        │
-│ │ Card    │ │ Card    │ │ Card    │ │ Card    │        │
-│ └─────────┘ └─────────┘ └─────────┘ └─────────┘        │
-│                                                         │
-│ ┌─────────────────────────┐ ┌─────────────────────────┐ │
-│ │ Recent Interviews       │ │ Upcoming Interviews     │ │
-│ │ Table/List              │ │ Table/List              │ │
-│ │                         │ │                         │ │
-│ └─────────────────────────┘ └─────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
+│ Header (Blue #14145A)                                   │
+│ Interview System                           [User Icon]  │
+├──────────────┬──────────────────────────────────────────┤
+│ Sidebar      │ Main Content Area (Gray Background)      │
+│ (White)      │                                          │
+│              │ ┌─────────┐ ┌─────────┐ ┌─────────┐     │
+│ • Dashboard  │ │ Metric  │ │ Metric  │ │ Metric  │     │
+│ • Interviews │ │ Card    │ │ Card    │ │ Card    │     │
+│ • Candidates │ └─────────┘ └─────────┘ └─────────┘     │
+│ • Analytics  │                                          │
+│ • Settings   │ ┌─────────────────────────────────────┐ │
+│              │ │ Recent Interviews                   │ │
+│              │ │ Table/List                          │ │
+│              │ │                                     │ │
+│              │ └─────────────────────────────────────┘ │
+│              │                                          │
+│              │ ┌─────────────────────────────────────┐ │
+│              │ │ Upcoming Interviews                 │ │
+│              │ │ Table/List                          │ │
+│              │ │                                     │ │
+│              │ └─────────────────────────────────────┘ │
+└──────────────┴──────────────────────────────────────────┘
 ```
 
 ### List View Layout
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ Header Navigation                                        │
-├─────────────────────────────────────────────────────────┤
-│ Page Title                                    [+ New]   │
-│                                                         │
-│ ┌─────────────────────────────────────────────────────┐ │
-│ │ Filters: [Role ▼] [Status ▼] [Search...    ] [🔍] │ │
-│ └─────────────────────────────────────────────────────┘ │
-│                                                         │
-│ ┌─────────────────────────────────────────────────────┐ │
-│ │ Data Table                                          │ │
-│ │ ┌─────┬─────────┬─────────┬─────────┬─────────────┐ │ │
-│ │ │ ☐   │ Name    │ Role    │ Status  │ Actions     │ │ │
-│ │ ├─────┼─────────┼─────────┼─────────┼─────────────┤ │ │
-│ │ │ ☐   │ John D. │ Dev     │ Active  │ [Edit][Del] │ │ │
-│ │ └─────┴─────────┴─────────┴─────────┴─────────────┘ │ │
-│ └─────────────────────────────────────────────────────┘ │
-│                                                         │
-│ Pagination: [< Prev] [1] [2] [3] [Next >]              │
-└─────────────────────────────────────────────────────────┘
+│ Header (Blue #14145A)                                   │
+│ Interview System                           [User Icon]  │
+├──────────────┬──────────────────────────────────────────┤
+│ Sidebar      │ Main Content Area (Gray Background)      │
+│ (White)      │                                          │
+│              │ Page Title                    [+ New]   │
+│ • Dashboard  │                                          │
+│ • Interviews │ ┌─────────────────────────────────────┐ │
+│ • Candidates │ │ Filters: [Role ▼] [Status ▼]       │ │
+│ • Analytics  │ │ [Search...              ] [🔍]     │ │
+│ • Settings   │ └─────────────────────────────────────┘ │
+│              │                                          │
+│              │ ┌─────────────────────────────────────┐ │
+│              │ │ Data Table                          │ │
+│              │ │ ┌─────┬─────────┬─────────┬───────┐ │ │
+│              │ │ │ ☐   │ Name    │ Role    │ Act.  │ │ │
+│              │ │ ├─────┼─────────┼─────────┼───────┤ │ │
+│              │ │ │ ☐   │ John D. │ Dev     │ [E][D]│ │ │
+│              │ │ │ ☐   │ Jane S. │ QA      │ [E][D]│ │ │
+│              │ │ └─────┴─────────┴─────────┴───────┘ │ │
+│              │ └─────────────────────────────────────┘ │
+│              │                                          │
+│              │ Pagination: [< Prev] [1] [2] [Next >]  │
+└──────────────┴──────────────────────────────────────────┘
 ```
 
 ### Form Layout
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ Header Navigation                                        │
-├─────────────────────────────────────────────────────────┤
-│ ← Back to List                                          │
-│                                                         │
-│ Form Title                                              │
-│                                                         │
-│ ┌─────────────────────────────────────────────────────┐ │
-│ │ ┌─────────────────┐ ┌─────────────────────────────┐ │ │
-│ │ │ Field Label     │ │ Field Label                 │ │ │
-│ │ │ [Input Field  ] │ │ [Dropdown ▼               ] │ │ │
-│ │ └─────────────────┘ └─────────────────────────────┘ │ │
-│ │                                                     │ │
-│ │ ┌─────────────────────────────────────────────────┐ │ │
-│ │ │ Field Label                                     │ │ │
-│ │ │ [Text Area                                    ] │ │ │
-│ │ │ [                                             ] │ │ │
-│ │ └─────────────────────────────────────────────────┘ │ │
-│ │                                                     │ │
-│ │ [Cancel] [Save Draft] [Save & Continue]             │ │
-│ └─────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
+│ Header (Blue #14145A)                                   │
+│ Interview System                           [User Icon]  │
+├──────────────┬──────────────────────────────────────────┤
+│ Sidebar      │ Main Content Area (Gray Background)      │
+│ (White)      │                                          │
+│              │ ← Back to List                          │
+│ • Dashboard  │                                          │
+│ • Interviews │ Form Title                              │
+│ • Candidates │                                          │
+│ • Analytics  │ ┌─────────────────────────────────────┐ │
+│ • Settings   │ │ ┌─────────────┐ ┌─────────────────┐ │ │
+│              │ │ │ First Name  │ │ Last Name       │ │ │
+│              │ │ │ [Input    ] │ │ [Input        ] │ │ │
+│              │ │ └─────────────┘ └─────────────────┘ │ │
+│              │ │                                     │ │
+│              │ │ ┌─────────────────────────────────┐ │ │
+│              │ │ │ Email Address                   │ │ │
+│              │ │ │ [Input Field              ]     │ │ │
+│              │ │ └─────────────────────────────────┘ │ │
+│              │ │                                     │ │
+│              │ │ ┌─────────────────────────────────┐ │ │
+│              │ │ │ Description                     │ │ │
+│              │ │ │ [Text Area                    ] │ │ │
+│              │ │ │ [                             ] │ │ │
+│              │ │ └─────────────────────────────────┘ │ │
+│              │ │                                     │ │
+│              │ │ [Cancel] [Save Draft] [Save]        │ │
+│              │ └─────────────────────────────────────┘ │
+└──────────────┴──────────────────────────────────────────┘
+```
+
+### Interview Detail Layout
+```
+┌─────────────────────────────────────────────────────────┐
+│ Header (Blue #14145A)                                   │
+│ Interview System                           [User Icon]  │
+├──────────────┬──────────────────────────────────────────┤
+│ Sidebar      │ Main Content Area (Gray Background)      │
+│ (White)      │                                          │
+│              │ ← Back to Interviews                    │
+│ • Dashboard  │                                          │
+│ • Interviews │ Interview with John Doe                 │
+│ • Candidates │                                          │
+│ • Analytics  │ ┌─────────────────────────────────────┐ │
+│ • Settings   │ │ Status Timeline                     │ │
+│              │ │ [●]──────[●]──────[○]               │ │
+│              │ │ Scheduled In Progress Completed     │ │
+│              │ └─────────────────────────────────────┘ │
+│              │                                          │
+│              │ ┌─────────────┐ ┌─────────────────────┐ │
+│              │ │ Candidate   │ │ Interview Details   │ │
+│              │ │ Info        │ │                     │ │
+│              │ │             │ │ Date: 2024-01-15    │ │
+│              │ │ John Doe    │ │ Time: 10:00 AM      │ │
+│              │ │ Senior Dev  │ │ Duration: 60 min    │ │
+│              │ │             │ │ Type: Technical     │ │
+│              │ └─────────────┘ └─────────────────────┘ │
+│              │                                          │
+│              │ ┌─────────────────────────────────────┐ │
+│              │ │ Feedback & Results                  │ │
+│              │ │ Overall Score: 4.2/5                │ │
+│              │ │ [Progress bars for skills]          │ │
+│              │ └─────────────────────────────────────┘ │
+└──────────────┴──────────────────────────────────────────┘
 ```
 
 ## Responsive Design Guidelines
