@@ -8,13 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.services.user_service import UserService
-from app.schemas.user import (
-    UserCreate,
-    UserUpdate,
-    UserOut,
-    UserListResponse,
-    UserFilter
-)
+from app.schemas.user import UserCreate, UserUpdate, UserOut, UserListResponse, UserFilter
 
 router = APIRouter()
 
@@ -65,7 +59,8 @@ async def create_user(
     - **first_name**: User's first name (required)
     - **last_name**: User's last name (required)
     - **email**: User's email address (required, must be unique)
-    - **role**: User's role (required)
+    - **last_name**: User's last name (required)
+    - **first_name**: User's first name (required)
     """
     return await service.create_user(db, user_data)
 
