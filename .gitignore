@@ -1,0 +1,106 @@
+# ============================================
+# PYTHON BACKEND
+# ============================================
+
+# Python bytecode / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Local environment / secrets
+.env
+.env.*
+*.env
+*.local
+*.ini
+
+# SQLite or local DBs (dev only)
+# If you want to include a demo DB later:
+#   !backend/app/db/demo.db
+backend/**/*.db
+
+# Pytest / Coverage / Cache
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.cache/
+nosetests.xml
+coverage.xml
+*.cover
+
+# Mypy / Ruff / Pyre / Pytype
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.pytype/
+
+# Logs
+*.log
+logs/
+*.out
+*.err
+
+# Jupyter (if used)
+.ipynb_checkpoints/
+
+
+# ============================================
+# FRONTEND: Vue 3 + Vite + Tailwind
+# ============================================
+
+# Node.js dependencies
+node_modules/
+
+# Vite cache
+.vite/
+
+# Frontend build output
+frontend/dist/
+frontend/public/build/
+frontend/public/assets/
+
+# Tailwind generated artifacts
+*.css.map
+*.postcss-map
+
+# Lint cache
+.eslintcache
+.stylelintcache
+
+# NPM / Yarn logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+
+# ============================================
+# DEV / OS / EDITORS
+# ============================================
+
+# VSCode
+.vscode/
+# If you want to keep project-specific settings:
+# !.vscode/settings.json
+
+# JetBrains IDEs
+.idea/
+*.iml
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
