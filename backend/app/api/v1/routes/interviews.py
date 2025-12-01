@@ -249,15 +249,20 @@ async def send_chat_message(
     service: InterviewService = Depends(get_interview_service)
 ):
     """
-    Send a chat message during interview and receive AI response.
+    Send a chat message during interview.
+
+    Returns different response structures based on message_type:
+    - start_interview: Returns conversation_history with filtered messages
+    - candidate_answer: Returns last_message with the AI response
 
     - **interview_link**: The interview link hash
-    - **message**: The message content from the candidate
+    - **message_type**: Type of message ('start_interview' or 'candidate_answer')
+    - **message**: The message content (required for candidate_answer)
     """
     # Get the interview by link to obtain the numeric ID
     interview = await service.get_interview_by_link(db, interview_link)
-    ai_response = await service.send_chat_message(db, interview.id, message_request.message)
-    return {"ai_response": ai_response}
+    response = await service.send_chat_message(db, interview.id, message_request.model_dump())
+    return response
 
 
 @router.get("/link/{interview_link}/transcripts", response_model=InterviewTranscriptsList, status_code=status.HTTP_200_OK)

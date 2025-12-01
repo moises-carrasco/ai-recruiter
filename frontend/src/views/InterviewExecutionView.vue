@@ -55,18 +55,29 @@
     <!-- Middle Section: Conversation Area -->
     <div class="bg-white shadow-sm rounded-lg p-6 flex-1 min-h-0">
       <h3 class="text-lg font-semibold text-gray-900 mb-4">Interview Conversation</h3>
-      <div class="h-96 overflow-y-auto space-y-4 p-2">
-        <div
-          v-for="message in messages"
-          :key="message.id"
-          class="flex"
-          :class="{ 'justify-end': message.sender === 'user', 'justify-end': message.sender === 'ai' }"
-        >
+      <div ref="messagesContainer" class="h-96 overflow-y-auto space-y-4 p-2">
+        <!-- Loading Messages State -->
+        <div v-if="loadingMessages" class="flex justify-center items-center h-full">
+          <div class="text-center">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>
+            <p class="text-gray-600 text-sm">Loading messages...</p>
+          </div>
+        </div>
+
+        <!-- Messages -->
+        <div v-else>
           <div
-            class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg text-sm"
-            :class="message.sender === 'ai' ? 'bg-gray-100 text-gray-900' : 'bg-blue-500 text-white'"
+            v-for="message in messages"
+            :key="message.id"
+            class="flex"
+            :class="{ 'justify-end': message.sender === 'user', 'justify-start': message.sender === 'ai' }"
           >
-            <p class="whitespace-pre-wrap">{{ message.text }}</p>
+            <div
+              class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg text-sm"
+              :class="message.sender === 'ai' ? 'bg-gray-100 text-gray-900' : 'bg-blue-500 text-white'"
+            >
+              <p class="whitespace-pre-wrap">{{ message.text }}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -95,7 +106,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { apiClient } from '@/utils/api.js'
 
@@ -107,6 +118,7 @@ const interviewId = route.params.id || ''
 
 // State management
 const loading = ref(true)
+const loadingMessages = ref(false)
 const error = ref('')
 const interviewData = ref({
   candidateName: '',
@@ -119,8 +131,17 @@ const interviewData = ref({
 
 // Messages loaded from database
 const messages = ref([])
+const messagesContainer = ref(null)
 
 const newMessage = ref('')
+
+// Auto-scroll to bottom of messages
+const scrollToBottom = async () => {
+  await nextTick()
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+  }
+}
 
 // Load interview data from API
 const loadInterviewData = async () => {
@@ -145,8 +166,11 @@ const loadInterviewData = async () => {
       status: interview.status_text || 'Unknown'
     }
 
-    // Load chat messages from database
-    await loadChatMessages()
+    // Start interview chat (send start_interview message)
+    await startInterviewChat()
+
+    // Scroll to bottom after loading all messages
+    await scrollToBottom()
 
     error.value = ''
   } catch (err) {
@@ -157,23 +181,25 @@ const loadInterviewData = async () => {
   }
 }
 
-// Load chat messages from database
-const loadChatMessages = async () => {
+// Send start_interview message when component loads
+const startInterviewChat = async () => {
   try {
-    const response = await apiClient.getInterviewTranscripts(interviewId)
-    const transcripts = response.data.transcripts
+    const response = await apiClient.sendChatMessage(interviewId, 'start_interview')
 
-    // Map transcripts to message format and sort by created_at
-    messages.value = transcripts
-      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-      .map(transcript => ({
-        id: transcript.id,
-        sender: transcript.role === 'candidate' ? 'user' : 'ai', // Map role to sender
-        text: transcript.transcript_content
-      }))
-  } catch (err) {
-    console.error('Error loading chat messages:', err)
-    // Don't show error for messages loading, just leave empty
+    // The response now contains conversation_history with filtered messages
+    const conversationHistory = response.data.conversation_history || []
+
+    // Map the conversation history to message format
+    messages.value = conversationHistory.map(msg => ({
+      id: msg.id,
+      sender: msg.role === 'candidate' ? 'user' : 'ai', // Map role to sender
+      text: msg.content
+    }))
+
+    // Scroll to bottom
+    await scrollToBottom()
+  } catch (error) {
+    console.error('Error starting interview chat:', error)
   }
 }
 
@@ -189,7 +215,7 @@ const sendMessage = async () => {
   newMessage.value = ''
 
   try {
-    // Add user message to chat
+    // Add user message to chat immediately
     messages.value.push({
       id: Date.now(),
       sender: 'user',
@@ -197,15 +223,22 @@ const sendMessage = async () => {
     })
 
     // Send message to backend and get AI response
-    const response = await apiClient.sendChatMessage(interviewId, userMessage)
-    const aiResponse = response.data.ai_response
+    const response = await apiClient.sendChatMessage(interviewId, 'candidate_answer', userMessage)
 
-    // Add AI response to chat
-    messages.value.push({
-      id: Date.now() + 1,
-      sender: 'ai',
-      text: aiResponse
-    })
+    // The response now contains last_message with the AI response
+    const lastMessage = response.data.last_message
+
+    if (lastMessage) {
+      // Add AI response to chat
+      messages.value.push({
+        id: lastMessage.id,
+        sender: 'ai',
+        text: lastMessage.content
+      })
+    }
+
+    // Scroll to bottom
+    await scrollToBottom()
   } catch (error) {
     console.error('Error sending chat message:', error)
     // Re-add the message to input if sending failed

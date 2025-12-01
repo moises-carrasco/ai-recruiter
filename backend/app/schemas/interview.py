@@ -106,7 +106,28 @@ class InterviewCompleteRequest(BaseModel):
 
 class ChatMessageRequest(BaseModel):
     """Schema for sending chat messages during interview."""
-    message: str
+    message: Optional[str] = None
+    message_type: str  # 'start_interview' or 'candidate_answer'
+
+
+class ChatMessageOut(BaseModel):
+    """Schema for individual chat message in response."""
+    id: int
+    content: str
+    role: str
+    started_at: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ChatConversationHistory(BaseModel):
+    """Schema for conversation history response (start_interview)."""
+    conversation_history: List[ChatMessageOut]
+
+
+class ChatLastMessage(BaseModel):
+    """Schema for last message response (candidate_answer)."""
+    last_message: Optional[ChatMessageOut] = None
 
 
 class InterviewTranscriptOut(BaseModel):

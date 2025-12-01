@@ -129,6 +129,12 @@ class InterviewTranscriptRepository(BaseRepository[InterviewTranscript]):
             InterviewTranscript.interview_id == interview_id
         ).first()
 
+    def get_messages_by_interview_id(self, db: Session, interview_id: int) -> List[InterviewTranscript]:
+        """Get all messages/transcripts for a specific interview ordered by started_at."""
+        return db.query(InterviewTranscript).filter(
+            InterviewTranscript.interview_id == interview_id
+        ).order_by(InterviewTranscript.started_at).all()
+
 
 class InterviewFeedbackRepository(BaseRepository[InterviewFeedback]):
     """Repository for interview feedback operations."""

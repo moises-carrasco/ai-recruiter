@@ -354,7 +354,10 @@ export const useInterviewsStore = defineStore('interviews', () => {
   // Utility functions
   const copyInterviewLink = (interview) => {
     if (interview.interview_link) {
-      const fullUrl = `${window.location.origin}/interview/${interview.interview_link}`
+      // Extract just the hash part from database link (format: interview/hash)
+      const linkParts = interview.interview_link.split('/')
+      const hash = linkParts.length > 1 ? linkParts[1] : interview.interview_link
+      const fullUrl = `${window.location.origin}/interview/${hash}`
       navigator.clipboard.writeText(fullUrl)
       return fullUrl
     }

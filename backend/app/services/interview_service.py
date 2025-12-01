@@ -32,6 +32,7 @@ from ..utils.link_generator import (
 from ..models.lookup import LookupItem
 from ..models.user import User
 from ..models.candidate import Candidate
+from .ai_agent_service import AIAgentService
 
 
 class InterviewService:
@@ -89,13 +90,20 @@ class InterviewService:
         """Get interview by unique link for candidate access."""
         # Add "interview/" prefix to match database format
         full_link = f"interview/{interview_link}"
+        print(f"DEBUG: Searching for interview with link: {full_link}")
         interview = self.interview_repo.get_by_link(db, full_link)
 
         if not interview:
+            print(f"DEBUG: Interview not found for link: {full_link}")
+            # Let's also check if there are any interviews at all
+            all_interviews = db.query(self.interview_repo.model).limit(5).all()
+            print(f"DEBUG: Sample interviews in DB: {[f'{i.id}: {i.interview_link}' for i in all_interviews]}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Interview link not found or invalid"
             )
+
+        print(f"DEBUG: Found interview: {interview.id} with link: {interview.interview_link}")
 
         # Note: Date/time validation removed as per user request
         # Validate link expiration (commented out)
@@ -383,34 +391,166 @@ class InterviewService:
 
         return InterviewOut(**interview_dict)
 
-    async def send_chat_message(self, db: Session, interview_id: int, message: str) -> str:
-        """Send a chat message and return AI response (echo for now)."""
+    def get_message_payload_interview(self, db: Session, interview_id: int) -> Dict[str, Any]:
+        """Get conversation payload for AI service in the expected format."""
+        transcripts = db.query(self.transcript_repo.model).filter(
+            self.transcript_repo.model.interview_id == interview_id
+        ).order_by(self.transcript_repo.model.created_at).all()
+
+        messages = []
+        for transcript in transcripts:
+            # Map roles: 'candidate' or 'system' -> 'user', 'assistant' -> 'assistant'
+            role = 'user' if transcript.role in ['candidate', 'system'] else 'assistant'
+            messages.append({
+                'role': role,
+                'content': transcript.transcript_content
+            })
+
+        return {
+            'model': 'saia:assistant:Interviewer_Expert',
+            'messages': messages,
+            'revision': 3,
+            'revisionName': '3'
+        }
+
+    async def send_chat_message(self, db: Session, interview_id: int, message_request: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Send a chat message based on message_type.
+
+        Returns different response structures based on message_type:
+        - start_interview: Returns filtered conversation history
+        - candidate_answer: Returns last assistant message
+        """
+        message_type = message_request.get('message_type')
+        message = message_request.get('message')
         current_time = datetime.utcnow().isoformat()
 
-        # Save candidate message
-        candidate_transcript = {
-            'interview_id': interview_id,
-            'transcript_content': message,
-            'role': 'candidate',
-            'started_at': current_time,
-            'completed_at': current_time
+        # Get conversation history
+        conversation_history_list = self.transcript_repo.get_messages_by_interview_id(db, interview_id)
+        is_new_conversation = len(conversation_history_list) == 0
+
+        if message_type == 'start_interview' and is_new_conversation:
+            # Get interview data for kickoff message
+            interview = await self.get_interview_by_id(db, interview_id)
+
+            # Create kickoff system message
+            kickoff_msg = f"""Hi Interviewer_Expert you are just about to start a new interview with a candidate. Here is the data:
+candidate = {interview.candidate_name}
+seniority = {interview.seniority_text}
+role = {interview.role_text}
+Job Description = {interview.interview_guidelines or 'Not provided'}
+cv = {interview.cv_file_path or 'Not provided'}
+
+This data is just internal information and it represents the parameter that you will be using to conduct the interview.
+Please remember to start the interview by saying hello to the candidate and introducing yourself"""
+
+            # Store system message
+            system_transcript = {
+                'interview_id': interview_id,
+                'transcript_content': kickoff_msg,
+                'role': 'system',
+                'started_at': current_time,
+                'completed_at': current_time
+            }
+            await self.transcript_repo.create(db, system_transcript)
+
+            # Refresh conversation history after adding system message
+            conversation_history_list = self.transcript_repo.get_messages_by_interview_id(db, interview_id)
+
+        elif message_type == 'candidate_answer':
+            # Store candidate message
+            candidate_transcript = {
+                'interview_id': interview_id,
+                'transcript_content': message,
+                'role': 'candidate',
+                'started_at': current_time,
+                'completed_at': current_time
+            }
+            await self.transcript_repo.create(db, candidate_transcript)
+
+            # Refresh conversation history after adding candidate message
+            conversation_history_list = self.transcript_repo.get_messages_by_interview_id(db, interview_id)
+
+            # Format payload for AI
+            conversation_payload = self._format_messages_payload_ai(conversation_history_list)
+
+            # Send to AI service
+            ai_service = AIAgentService()
+            ai_response = await ai_service.send_chat_message(conversation_payload)
+
+            # Check if AI response was successful
+            if ai_response.get('status') != 'succeeded':
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="AI service error: " + ai_response.get('error', 'Unknown error')
+                )
+
+            # Extract and store AI response
+            message_from_ai = ai_response.get('text', '')
+            ai_transcript = {
+                'interview_id': interview_id,
+                'transcript_content': message_from_ai,
+                'role': 'assistant',
+                'started_at': current_time,
+                'completed_at': current_time
+            }
+            await self.transcript_repo.create(db, ai_transcript)
+
+        # Filter messages to only include candidate and assistant roles
+        filtered_conversation_history = self._filter_messages_only(conversation_history_list, roles=['candidate', 'assistant'])
+
+        if message_type == 'start_interview':
+            # Return the whole filtered conversation history
+            return {
+                'conversation_history': [
+                    {
+                        'id': msg.id,
+                        'content': msg.transcript_content,
+                        'role': msg.role,
+                        'started_at': msg.started_at
+                    } for msg in filtered_conversation_history
+                ]
+            }
+        elif message_type == 'candidate_answer':
+            # Get the last assistant message
+            assistant_messages = [msg for msg in filtered_conversation_history if msg.role == 'assistant']
+            if assistant_messages:
+                last_message = assistant_messages[-1]
+                return {
+                    'last_message': {
+                        'id': last_message.id,
+                        'content': last_message.transcript_content,
+                        'role': last_message.role,
+                        'started_at': last_message.started_at
+                    }
+                }
+            else:
+                return {'last_message': None}
+
+        # Default response
+        return {'conversation_history': []}
+
+    def _filter_messages_only(self, conversation_history_list: List, roles: List[str]) -> List:
+        """Filter messages to only include specified roles."""
+        return [msg for msg in conversation_history_list if msg.role in roles]
+
+    def _format_messages_payload_ai(self, conversation_history_list: List) -> Dict[str, Any]:
+        """Format messages for AI service payload."""
+        messages = []
+        for transcript in conversation_history_list:
+            # Map roles: 'candidate' or 'system' -> 'user', 'assistant' -> 'assistant'
+            role = 'user' if transcript.role in ['candidate', 'system'] else 'assistant'
+            messages.append({
+                'role': role,
+                'content': transcript.transcript_content
+            })
+
+        return {
+            'assistant': 'Interviewer_Expert',
+            'messages': messages,
+            'revision': 3,
+            'revisionName': '3'
         }
-        await self.transcript_repo.create(db, candidate_transcript)
-
-        # Generate AI response (simple echo for now)
-        ai_response = message  # Echo the user's message
-
-        # Save AI response
-        ai_transcript = {
-            'interview_id': interview_id,
-            'transcript_content': ai_response,
-            'role': 'assistant',
-            'started_at': current_time,
-            'completed_at': current_time
-        }
-        await self.transcript_repo.create(db, ai_transcript)
-
-        return ai_response
 
     async def _get_interview_with_feedback(self, db: Session, interview_id: int) -> InterviewWithFeedbackOut:
         """Get interview with associated feedback and transcript."""

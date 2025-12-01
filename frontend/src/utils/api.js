@@ -63,7 +63,7 @@ export const apiClient = {
   updateInterview: (id, data) => api.put(`/interviews/${id}/`, data),
   deleteInterview: (id) => api.delete(`/interviews/${id}/`),
   getInterviewByLink: (link) => api.get(`/interviews/link/${link}/`),
-  sendChatMessage: (interviewId, message) => api.post(`/interviews/link/${interviewId}/chat/`, { message }),
+  sendChatMessage: (interviewId, messageType, message = null) => api.post(`/interviews/link/${interviewId}/chat/`, { message_type: messageType, message }),
   getInterviewTranscripts: (interviewId) => api.get(`/interviews/link/${interviewId}/transcripts/`),
   startInterview: (id) => api.post(`/interviews/${id}/start/`),
   completeInterview: (id) => api.post(`/interviews/${id}/complete/`),
