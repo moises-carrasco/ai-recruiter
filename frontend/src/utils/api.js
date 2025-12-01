@@ -57,15 +57,15 @@ export const apiClient = {
   getCandidateByEmail: (email) => api.get(`/candidates/email/${email}`),
 
   // Interviews
-  getInterviews: (params) => api.get('/interviews', { params }),
-  getInterview: (id) => api.get(`/interviews/${id}`),
-  createInterview: (data) => api.post('/interviews', data),
-  updateInterview: (id, data) => api.put(`/interviews/${id}`, data),
-  deleteInterview: (id) => api.delete(`/interviews/${id}`),
-  getInterviewByLink: (link) => api.get(`/interviews/link/${link}`),
-  startInterview: (id) => api.post(`/interviews/${id}/start`),
-  completeInterview: (id) => api.post(`/interviews/${id}/complete`),
-  getInterviewFeedback: (id) => api.get(`/interviews/${id}/feedback`),
+  getInterviews: (params) => api.get('/interviews/', { params }),
+  getInterview: (id) => api.get(`/interviews/${id}/`),
+  createInterview: (data) => api.post('/interviews/', data),
+  updateInterview: (id, data) => api.put(`/interviews/${id}/`, data),
+  deleteInterview: (id) => api.delete(`/interviews/${id}/`),
+  getInterviewByLink: (link) => api.get(`/interviews/link/${link}/`),
+  startInterview: (id) => api.post(`/interviews/${id}/start/`),
+  completeInterview: (id) => api.post(`/interviews/${id}/complete/`),
+  getInterviewFeedback: (id) => api.get(`/interviews/${id}/feedback/`),
 
   // Lookup data
   getLookupData: () => api.get('/lookup'),

@@ -2,7 +2,7 @@
 Interview service for interview management and execution operations.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
@@ -87,19 +87,23 @@ class InterviewService:
 
     async def get_interview_by_link(self, db: Session, interview_link: str) -> InterviewOut:
         """Get interview by unique link for candidate access."""
-        interview = await self.interview_repo.get_by_link(db, interview_link)
+        # Add "interview/" prefix to match database format
+        full_link = f"interview/{interview_link}"
+        interview = self.interview_repo.get_by_link(db, full_link)
+
         if not interview:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Interview link not found or invalid"
             )
 
-        # Validate link expiration
-        if not validate_link_expiration(interview.scheduled_datetime):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Interview link has expired"
-            )
+        # Note: Date/time validation removed as per user request
+        # Validate link expiration (commented out)
+        # if not validate_link_expiration(interview.scheduled_datetime):
+        #     raise HTTPException(
+        #         status_code=status.HTTP_403_FORBIDDEN,
+        #         detail="Interview link has expired"
+        #     )
 
         return await self._enrich_interview_data(db, interview)
 
@@ -341,7 +345,7 @@ class InterviewService:
         # Validate scheduled datetime is in the future
         if hasattr(interview_data, 'scheduled_datetime') and interview_data.scheduled_datetime:
             scheduled = datetime.fromisoformat(interview_data.scheduled_datetime.replace('Z', '+00:00'))
-            if scheduled <= datetime.utcnow():
+            if scheduled <= datetime.now(timezone.utc):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Interview must be scheduled in the future"

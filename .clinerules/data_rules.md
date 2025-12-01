@@ -2,7 +2,7 @@
 
 These rules define the database naming conventions, data handling guidelines, and SQLite-specific best practices for this project.  
 Cline MUST follow these rules when generating or modifying database-related code.
-The database file is located in the root folder under the name interview_system.db
+The database file is located in the root folder under the name ./interview_system.db
 
 ---
 

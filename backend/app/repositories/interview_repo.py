@@ -27,7 +27,7 @@ class InterviewRepository(BaseRepository[Interview]):
         """Get all interviews created by a specific analyst."""
         return db.query(Interview).filter(Interview.analyst_id == analyst_id).all()
 
-    def filter_by_role_and_client(
+    async def filter_by_role_and_client(
         self,
         db: Session,
         role_id: Optional[int] = None,
@@ -65,7 +65,7 @@ class InterviewRepository(BaseRepository[Interview]):
 
         return query.order_by(Interview.scheduled_datetime).all()
 
-    def get_interviews_with_filters(
+    async def get_interviews_with_filters(
         self,
         db: Session,
         filters: Dict[str, Any],
@@ -93,7 +93,7 @@ class InterviewRepository(BaseRepository[Interview]):
 
         return query.order_by(desc(Interview.created_at)).offset(skip).limit(limit).all()
 
-    def count_interviews_with_filters(self, db: Session, filters: Dict[str, Any]) -> int:
+    async def count_interviews_with_filters(self, db: Session, filters: Dict[str, Any]) -> int:
         """Count interviews with filters."""
         from sqlalchemy import func
         query = db.query(func.count(Interview.id))

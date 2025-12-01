@@ -4,6 +4,7 @@
 
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { apiClient } from '../utils/api'
 
 export const useLookupStore = defineStore('lookup', () => {
   // State
@@ -15,53 +16,99 @@ export const useLookupStore = defineStore('lookup', () => {
   const error = ref(null)
 
   // Actions
+  const setLoading = (value) => {
+    loading.value = value
+  }
+
+  const setError = (errorMessage) => {
+    error.value = errorMessage
+  }
+
+  const clearError = () => {
+    error.value = null
+  }
+
+  const fetchLookupData = async () => {
+    setLoading(true)
+    clearError()
+
+    try {
+      // Fetch data from real API endpoints
+      const [rolesResponse, clientsResponse, senioritiesResponse, statusesResponse] = await Promise.all([
+        apiClient.getRoles(),
+        apiClient.getClients(),
+        apiClient.getSeniorities(),
+        apiClient.getInterviewStatuses()
+      ])
+
+      roles.value = rolesResponse.data || []
+      clients.value = clientsResponse.data || []
+      seniorities.value = senioritiesResponse.data || []
+      interviewStatuses.value = statusesResponse.data || []
+
+      return {
+        roles: roles.value,
+        clients: clients.value,
+        seniorities: seniorities.value,
+        interviewStatuses: interviewStatuses.value
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.detail || 'Error fetching lookup data'
+      setError(errorMessage)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const fetchAllLookupData = async () => {
-    // TODO: Implement fetch all lookup data
-    // - Call lookup APIs
-    // - Update all lookup states
-    // - Handle loading and error states
+    return await fetchLookupData()
   }
 
   const fetchRoles = async () => {
-    // TODO: Implement fetch roles
-    // - Call roles API
-    // - Update roles state
+    if (roles.value.length === 0) {
+      await fetchLookupData()
+    }
+    return roles.value
   }
 
   const fetchClients = async () => {
-    // TODO: Implement fetch clients
-    // - Call clients API
-    // - Update clients state
+    if (clients.value.length === 0) {
+      await fetchLookupData()
+    }
+    return clients.value
   }
 
   const fetchSeniorities = async () => {
-    // TODO: Implement fetch seniorities
-    // - Call seniorities API
-    // - Update seniorities state
+    if (seniorities.value.length === 0) {
+      await fetchLookupData()
+    }
+    return seniorities.value
   }
 
   const fetchInterviewStatuses = async () => {
-    // TODO: Implement fetch interview statuses
-    // - Call statuses API
-    // - Update statuses state
+    if (interviewStatuses.value.length === 0) {
+      await fetchLookupData()
+    }
+    return interviewStatuses.value
   }
 
   const createLookupItem = async (domain, itemData) => {
     // TODO: Implement create lookup item
-    // - Call create lookup API
-    // - Update appropriate lookup list
+    setError('Create lookup item not implemented yet')
+    throw new Error('Create lookup item not implemented yet')
   }
 
   const updateLookupItem = async (id, itemData) => {
     // TODO: Implement update lookup item
-    // - Call update lookup API
-    // - Update item in appropriate list
+    setError('Update lookup item not implemented yet')
+    throw new Error('Update lookup item not implemented yet')
   }
 
   const deleteLookupItem = async (id, domain) => {
     // TODO: Implement delete lookup item
-    // - Call delete lookup API
-    // - Remove from appropriate list
+    setError('Delete lookup item not implemented yet')
+    throw new Error('Delete lookup item not implemented yet')
   }
 
   return {
@@ -71,6 +118,7 @@ export const useLookupStore = defineStore('lookup', () => {
     interviewStatuses,
     loading,
     error,
+    fetchLookupData,
     fetchAllLookupData,
     fetchRoles,
     fetchClients,
@@ -78,6 +126,7 @@ export const useLookupStore = defineStore('lookup', () => {
     fetchInterviewStatuses,
     createLookupItem,
     updateLookupItem,
-    deleteLookupItem
+    deleteLookupItem,
+    clearError
   }
 })

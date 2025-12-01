@@ -27,7 +27,7 @@ uvicorn app.main:app --reload --port 8000 --app-dir backend
 - The project uses **SQLite**.
 - The database file is:
   ```
-  interview_system.db
+  ./interview_system.db
   ```
   located in the **project root**.
 - This database already contains some tables.  

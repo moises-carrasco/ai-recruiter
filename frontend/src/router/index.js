@@ -33,7 +33,7 @@ const router = createRouter({
       component: () => import('../views/InterviewDetailView.vue')
     },
     {
-      path: '/interview/:link',
+      path: '/interview/interview/:id',
       name: 'interview-execution',
       component: () => import('../views/InterviewExecutionView.vue')
     },

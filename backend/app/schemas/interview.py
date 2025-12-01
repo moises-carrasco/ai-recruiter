@@ -13,7 +13,7 @@ class InterviewCreate(BaseModel):
     candidate_id: int
     role_id: int
     seniority_id: int
-    client_id: Optional[int] = None
+    client_id: int  # Made mandatory
     cv_file_path: Optional[str] = None
     job_description_path: Optional[str] = None
     interview_guidelines: Optional[str] = None
