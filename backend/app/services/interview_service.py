@@ -304,10 +304,10 @@ class InterviewService:
         return None
 
     async def get_interview_transcripts(self, db: Session, interview_id: int) -> List[InterviewTranscriptOut]:
-        """Get all transcripts for a specific interview ordered by created_at."""
+        """Get all transcripts for a specific interview ordered by started_at and id."""
         transcripts = db.query(self.transcript_repo.model).filter(
             self.transcript_repo.model.interview_id == interview_id
-        ).order_by(self.transcript_repo.model.created_at).all()
+        ).order_by(self.transcript_repo.model.started_at, self.transcript_repo.model.id).all()
 
         return [InterviewTranscriptOut.model_validate(transcript) for transcript in transcripts]
 
@@ -395,7 +395,7 @@ class InterviewService:
         """Get conversation payload for AI service in the expected format."""
         transcripts = db.query(self.transcript_repo.model).filter(
             self.transcript_repo.model.interview_id == interview_id
-        ).order_by(self.transcript_repo.model.created_at).all()
+        ).order_by(self.transcript_repo.model.started_at, self.transcript_repo.model.id).all()
 
         messages = []
         for transcript in transcripts:
@@ -496,8 +496,15 @@ Please remember to start the interview by saying hello to the candidate and intr
             }
             await self.transcript_repo.create(db, ai_transcript)
 
+            # Refresh conversation history after adding AI response
+            conversation_history_list = self.transcript_repo.get_messages_by_interview_id(db, interview_id)
+
         # Filter messages to only include candidate and assistant roles
         filtered_conversation_history = self._filter_messages_only(conversation_history_list, roles=['candidate', 'assistant'])
+
+        print(f"DEBUG: Filtered conversation history has {len(filtered_conversation_history)} messages")
+        for msg in filtered_conversation_history:
+            print(f"DEBUG: Message {msg.id}: role={msg.role}, content_preview='{msg.transcript_content[:50]}...'")
 
         if message_type == 'start_interview':
             # Return the whole filtered conversation history
@@ -514,8 +521,11 @@ Please remember to start the interview by saying hello to the candidate and intr
         elif message_type == 'candidate_answer':
             # Get the last assistant message
             assistant_messages = [msg for msg in filtered_conversation_history if msg.role == 'assistant']
+            print(f"DEBUG: Found {len(assistant_messages)} assistant messages")
+
             if assistant_messages:
                 last_message = assistant_messages[-1]
+                print(f"DEBUG: Returning last assistant message: id={last_message.id}, content_preview='{last_message.transcript_content[:50]}...'")
                 return {
                     'last_message': {
                         'id': last_message.id,
@@ -525,6 +535,7 @@ Please remember to start the interview by saying hello to the candidate and intr
                     }
                 }
             else:
+                print("DEBUG: No assistant messages found!")
                 return {'last_message': None}
 
         # Default response

@@ -4,7 +4,7 @@ Interview repository for database operations.
 
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, desc
+from sqlalchemy import and_, or_, desc, asc
 from .base import BaseRepository
 from ..models.interview import Interview, InterviewTranscript, InterviewFeedback
 
@@ -130,10 +130,10 @@ class InterviewTranscriptRepository(BaseRepository[InterviewTranscript]):
         ).first()
 
     def get_messages_by_interview_id(self, db: Session, interview_id: int) -> List[InterviewTranscript]:
-        """Get all messages/transcripts for a specific interview ordered by started_at."""
+        """Get all messages/transcripts for a specific interview ordered by started_at and id."""
         return db.query(InterviewTranscript).filter(
             InterviewTranscript.interview_id == interview_id
-        ).order_by(InterviewTranscript.started_at).all()
+        ).order_by(asc(InterviewTranscript.started_at), asc(InterviewTranscript.id)).all()
 
 
 class InterviewFeedbackRepository(BaseRepository[InterviewFeedback]):
