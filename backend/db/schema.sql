@@ -136,11 +136,12 @@ CREATE TABLE interview_transcripts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     interview_id INTEGER NOT NULL,
     transcript_content TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('candidate', 'assistant', 'system')),
     started_at TEXT,
     completed_at TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
-    
+
     -- Foreign Key Constraints
     CONSTRAINT fk_transcripts_interview FOREIGN KEY (interview_id) REFERENCES interviews(id) ON DELETE CASCADE
 );

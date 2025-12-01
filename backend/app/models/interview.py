@@ -2,7 +2,7 @@
 Interview-related models: interviews, transcripts, and feedbacks.
 """
 
-from sqlalchemy import Column, Integer, Text, ForeignKey, CheckConstraint
+from sqlalchemy import Column, Integer, Text, ForeignKey, CheckConstraint, String
 from sqlalchemy.sql import func
 from .base import Base
 
@@ -39,13 +39,19 @@ class InterviewTranscript(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     interview_id = Column(Integer, ForeignKey('interviews.id', ondelete='CASCADE'), nullable=False)
     transcript_content = Column(Text, nullable=False)
+    role = Column(String(20), nullable=False)
     started_at = Column(Text)
     completed_at = Column(Text)
     created_at = Column(Text, nullable=False, default=func.datetime('now'))
     updated_at = Column(Text, nullable=False, default=func.datetime('now'))
 
+    # Add check constraint for role values
+    __table_args__ = (
+        CheckConstraint("role IN ('candidate', 'assistant', 'system')", name='chk_transcript_role'),
+    )
+
     def __repr__(self):
-        return f"<InterviewTranscript(id={self.id}, interview_id={self.interview_id})>"
+        return f"<InterviewTranscript(id={self.id}, interview_id={self.interview_id}, role={self.role})>"
 
 
 class InterviewFeedback(Base):

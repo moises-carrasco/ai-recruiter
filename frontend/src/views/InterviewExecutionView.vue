@@ -60,7 +60,7 @@
           v-for="message in messages"
           :key="message.id"
           class="flex"
-          :class="{ 'justify-end': message.sender === 'user', 'justify-start': message.sender === 'ai' }"
+          :class="{ 'justify-end': message.sender === 'user', 'justify-end': message.sender === 'ai' }"
         >
           <div
             class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg text-sm"
@@ -117,34 +117,8 @@ const interviewData = ref({
   status: ''
 })
 
-// Fake conversation messages
-const messages = ref([
-  {
-    id: 1,
-    sender: 'ai',
-    text: 'Hello! I\'m your AI interviewer. Let\'s begin with some questions about your experience with data engineering.'
-  },
-  {
-    id: 2,
-    sender: 'user',
-    text: 'Hi! I\'m ready to start the interview.'
-  },
-  {
-    id: 3,
-    sender: 'ai',
-    text: 'Great! Can you tell me about your experience working with large datasets and data processing pipelines?'
-  },
-  {
-    id: 4,
-    sender: 'user',
-    text: 'I have several years of experience working with big data technologies. I\'ve built ETL pipelines using Apache Spark and Airflow, and I\'ve worked with both structured and unstructured data.'
-  },
-  {
-    id: 5,
-    sender: 'ai',
-    text: 'That sounds impressive. Can you walk me through a specific project where you optimized a data pipeline for performance?'
-  }
-])
+// Messages loaded from database
+const messages = ref([])
 
 const newMessage = ref('')
 
@@ -171,6 +145,9 @@ const loadInterviewData = async () => {
       status: interview.status_text || 'Unknown'
     }
 
+    // Load chat messages from database
+    await loadChatMessages()
+
     error.value = ''
   } catch (err) {
     console.error('Error loading interview data:', err)
@@ -180,41 +157,60 @@ const loadInterviewData = async () => {
   }
 }
 
+// Load chat messages from database
+const loadChatMessages = async () => {
+  try {
+    const response = await apiClient.getInterviewTranscripts(interviewId)
+    const transcripts = response.data.transcripts
+
+    // Map transcripts to message format and sort by created_at
+    messages.value = transcripts
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+      .map(transcript => ({
+        id: transcript.id,
+        sender: transcript.role === 'candidate' ? 'user' : 'ai', // Map role to sender
+        text: transcript.transcript_content
+      }))
+  } catch (err) {
+    console.error('Error loading chat messages:', err)
+    // Don't show error for messages loading, just leave empty
+  }
+}
+
 // Load data when component mounts
 onMounted(() => {
   loadInterviewData()
 })
 
-const sendMessage = () => {
+const sendMessage = async () => {
   if (!newMessage.value.trim()) return
-
-  // Add user message
-  messages.value.push({
-    id: Date.now(),
-    sender: 'user',
-    text: newMessage.value.trim()
-  })
 
   const userMessage = newMessage.value.trim()
   newMessage.value = ''
 
-  // Simulate AI response after a short delay
-  setTimeout(() => {
-    const aiResponses = [
-      'Thank you for your detailed response. That gives me a good understanding of your experience.',
-      'Interesting approach! Can you elaborate on the challenges you faced?',
-      'Good point. How did you handle data quality and validation in that scenario?',
-      'That\'s a solid technical foundation. Let\'s discuss some more advanced concepts.',
-      'I appreciate your thorough explanation. What tools and frameworks did you find most effective?'
-    ]
-
-    const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)]
-
+  try {
+    // Add user message to chat
     messages.value.push({
-      id: Date.now() + Math.random(),
-      sender: 'ai',
-      text: randomResponse
+      id: Date.now(),
+      sender: 'user',
+      text: userMessage
     })
-  }, 1000 + Math.random() * 2000) // Random delay between 1-3 seconds
+
+    // Send message to backend and get AI response
+    const response = await apiClient.sendChatMessage(interviewId, userMessage)
+    const aiResponse = response.data.ai_response
+
+    // Add AI response to chat
+    messages.value.push({
+      id: Date.now() + 1,
+      sender: 'ai',
+      text: aiResponse
+    })
+  } catch (error) {
+    console.error('Error sending chat message:', error)
+    // Re-add the message to input if sending failed
+    newMessage.value = userMessage
+    // Could add error handling UI here
+  }
 }
 </script>

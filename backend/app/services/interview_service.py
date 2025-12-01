@@ -295,6 +295,14 @@ class InterviewService:
             return InterviewTranscriptOut.model_validate(transcript)
         return None
 
+    async def get_interview_transcripts(self, db: Session, interview_id: int) -> List[InterviewTranscriptOut]:
+        """Get all transcripts for a specific interview ordered by created_at."""
+        transcripts = db.query(self.transcript_repo.model).filter(
+            self.transcript_repo.model.interview_id == interview_id
+        ).order_by(self.transcript_repo.model.created_at).all()
+
+        return [InterviewTranscriptOut.model_validate(transcript) for transcript in transcripts]
+
     async def _validate_interview_references(
         self,
         db: Session,
@@ -374,6 +382,35 @@ class InterviewService:
         })
 
         return InterviewOut(**interview_dict)
+
+    async def send_chat_message(self, db: Session, interview_id: int, message: str) -> str:
+        """Send a chat message and return AI response (echo for now)."""
+        current_time = datetime.utcnow().isoformat()
+
+        # Save candidate message
+        candidate_transcript = {
+            'interview_id': interview_id,
+            'transcript_content': message,
+            'role': 'candidate',
+            'started_at': current_time,
+            'completed_at': current_time
+        }
+        await self.transcript_repo.create(db, candidate_transcript)
+
+        # Generate AI response (simple echo for now)
+        ai_response = message  # Echo the user's message
+
+        # Save AI response
+        ai_transcript = {
+            'interview_id': interview_id,
+            'transcript_content': ai_response,
+            'role': 'assistant',
+            'started_at': current_time,
+            'completed_at': current_time
+        }
+        await self.transcript_repo.create(db, ai_transcript)
+
+        return ai_response
 
     async def _get_interview_with_feedback(self, db: Session, interview_id: int) -> InterviewWithFeedbackOut:
         """Get interview with associated feedback and transcript."""

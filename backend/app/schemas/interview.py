@@ -104,15 +104,28 @@ class InterviewCompleteRequest(BaseModel):
     transcript_content: str
 
 
+class ChatMessageRequest(BaseModel):
+    """Schema for sending chat messages during interview."""
+    message: str
+
+
 class InterviewTranscriptOut(BaseModel):
     """Schema for interview transcript output."""
     id: int
     interview_id: int
     transcript_content: str
+    role: str
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
     created_at: str
     updated_at: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class InterviewTranscriptsList(BaseModel):
+    """Schema for list of interview transcripts."""
+    transcripts: List[InterviewTranscriptOut]
 
     model_config = ConfigDict(from_attributes=True)
 

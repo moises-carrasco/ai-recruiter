@@ -18,7 +18,9 @@ from app.schemas.interview import (
     InterviewStartRequest,
     InterviewCompleteRequest,
     InterviewFeedbackOut,
-    InterviewTranscriptOut
+    InterviewTranscriptOut,
+    InterviewTranscriptsList,
+    ChatMessageRequest
 )
 
 router = APIRouter()
@@ -237,6 +239,42 @@ async def get_interview_transcript(
             detail="Interview transcript not found"
         )
     return transcript
+
+
+@router.post("/link/{interview_link}/chat", status_code=status.HTTP_200_OK)
+async def send_chat_message(
+    interview_link: str,
+    message_request: ChatMessageRequest,
+    db: Session = Depends(get_db),
+    service: InterviewService = Depends(get_interview_service)
+):
+    """
+    Send a chat message during interview and receive AI response.
+
+    - **interview_link**: The interview link hash
+    - **message**: The message content from the candidate
+    """
+    # Get the interview by link to obtain the numeric ID
+    interview = await service.get_interview_by_link(db, interview_link)
+    ai_response = await service.send_chat_message(db, interview.id, message_request.message)
+    return {"ai_response": ai_response}
+
+
+@router.get("/link/{interview_link}/transcripts", response_model=InterviewTranscriptsList, status_code=status.HTTP_200_OK)
+async def get_interview_transcripts(
+    interview_link: str,
+    db: Session = Depends(get_db),
+    service: InterviewService = Depends(get_interview_service)
+):
+    """
+    Get all transcripts for an interview ordered by created_at.
+
+    - **interview_link**: The interview link hash
+    """
+    # Get the interview by link to obtain the numeric ID
+    interview = await service.get_interview_by_link(db, interview_link)
+    transcripts = await service.get_interview_transcripts(db, interview.id)
+    return InterviewTranscriptsList(transcripts=transcripts)
 
 
 @router.get("/filter/by-role-client", response_model=InterviewListResponse, status_code=status.HTTP_200_OK)
