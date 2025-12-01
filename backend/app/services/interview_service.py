@@ -29,6 +29,7 @@ from ..utils.link_generator import (
     validate_link_expiration,
     generate_link_expiration_datetime
 )
+from ..utils.file_handler import FileHandler
 from ..models.lookup import LookupItem
 from ..models.user import User
 from ..models.candidate import Candidate
@@ -137,6 +138,13 @@ class InterviewService:
     async def delete_interview(self, db: Session, interview_id: int) -> None:
         """Delete an interview (soft delete if applicable)."""
         interview = await self.get_interview_by_id(db, interview_id)
+
+        # Clean up associated files before deleting
+        if interview.cv_file_path:
+            FileHandler.delete_file(interview.cv_file_path)
+        if interview.job_description_path:
+            FileHandler.delete_file(interview.job_description_path)
+
         await self.interview_repo.delete(db, interview_id)
 
     async def list_interviews(

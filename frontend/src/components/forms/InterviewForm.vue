@@ -189,14 +189,24 @@
           id="cvFile"
           ref="cvFileInput"
           type="file"
-          accept=".pdf,.doc,.docx"
+          accept=".txt"
           @change="handleCvFileChange"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-        <p class="mt-1 text-sm text-gray-500">Accepted formats: PDF, DOC, DOCX (max 10MB)</p>
+        <p class="mt-1 text-sm text-gray-500">Accepted formats: TXT (max 10MB)</p>
         <p v-if="cvFileName" class="mt-1 text-sm text-green-600">
           Selected: {{ cvFileName }}
         </p>
+        <!-- Download link for existing CV file -->
+        <div v-if="isEditMode && props.interview?.cv_file_path" class="mt-2">
+          <a
+            :href="`${api.defaults.baseURL}/interviews/${props.interview.id}/download-cv`"
+            target="_blank"
+            class="text-blue-600 hover:text-blue-800 text-sm underline"
+          >
+            Download current CV file
+          </a>
+        </div>
       </div>
 
       <!-- Job Description File Upload -->
@@ -208,14 +218,24 @@
           id="jobDescriptionFile"
           ref="jobDescriptionFileInput"
           type="file"
-          accept=".pdf,.doc,.docx,.txt"
+          accept=".txt"
           @change="handleJobDescriptionFileChange"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-        <p class="mt-1 text-sm text-gray-500">Accepted formats: PDF, DOC, DOCX, TXT (max 10MB)</p>
+        <p class="mt-1 text-sm text-gray-500">Accepted formats: TXT (max 10MB)</p>
         <p v-if="jobDescriptionFileName" class="mt-1 text-sm text-green-600">
           Selected: {{ jobDescriptionFileName }}
         </p>
+        <!-- Download link for existing job description file -->
+        <div v-if="isEditMode && props.interview?.job_description_path" class="mt-2">
+          <a
+            :href="`${api.defaults.baseURL}/interviews/${props.interview.id}/download-job-description`"
+            target="_blank"
+            class="text-blue-600 hover:text-blue-800 text-sm underline"
+          >
+            Download current job description file
+          </a>
+        </div>
       </div>
 
       <!-- Interview Guidelines -->
@@ -286,6 +306,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useCandidatesStore } from '../../store/candidates'
 import { useUsersStore } from '../../store/users'
 import { useLookupStore } from '../../store/lookup'
+import api from '../../utils/api'
 
 // Props
 const props = defineProps({
@@ -328,6 +349,8 @@ const cvFileName = ref('')
 const jobDescriptionFileName = ref('')
 const cvFileInput = ref(null)
 const jobDescriptionFileInput = ref(null)
+const pendingCvFile = ref(null)
+const pendingJobDescriptionFile = ref(null)
 
 // Mock data is now handled by the stores directly
 
@@ -444,6 +467,11 @@ const validateForm = () => {
   validateField('status_id', form.value.status_id)
 }
 
+const showMessage = (message, type = 'error') => {
+  console[type === 'error' ? 'error' : 'log'](message)
+  // For now, just log. In a real app, you might show a toast notification
+}
+
 const resetForm = () => {
   form.value = {
     analyst_id: '',
@@ -483,27 +511,69 @@ const loadInterviewData = () => {
   }
 }
 
-const handleCvFileChange = (event) => {
+const handleCvFileChange = async (event) => {
   const file = event.target.files[0]
   if (file) {
-    // In a real app, you would upload the file and get back a path
-    // For now, we'll just store the file name
-    cvFileName.value = file.name
-    form.value.cv_file_path = file.name // This would be replaced with actual upload logic
+    try {
+      cvFileName.value = file.name
+      // For new interviews, we'll upload after creation
+      // For existing interviews, upload immediately
+      if (isEditMode.value && props.interview?.id) {
+        const formData = new FormData()
+        formData.append('file', file)
+        const response = await api.post(`/interviews/${props.interview.id}/upload-cv`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        form.value.cv_file_path = response.data.file_path
+      } else {
+        // Store file temporarily for later upload
+        pendingCvFile.value = file
+        form.value.cv_file_path = file.name // Temporary placeholder
+      }
+    } catch (error) {
+      console.error('Error uploading CV file:', error)
+      showMessage('Error uploading CV file', 'error')
+      cvFileName.value = ''
+      form.value.cv_file_path = ''
+      pendingCvFile.value = null
+    }
   } else {
     cvFileName.value = ''
     form.value.cv_file_path = ''
+    pendingCvFile.value = null
   }
 }
 
-const handleJobDescriptionFileChange = (event) => {
+const handleJobDescriptionFileChange = async (event) => {
   const file = event.target.files[0]
   if (file) {
-    jobDescriptionFileName.value = file.name
-    form.value.job_description_path = file.name // This would be replaced with actual upload logic
+    try {
+      jobDescriptionFileName.value = file.name
+      // For new interviews, we'll upload after creation
+      // For existing interviews, upload immediately
+      if (isEditMode.value && props.interview?.id) {
+        const formData = new FormData()
+        formData.append('file', file)
+        const response = await api.post(`/interviews/${props.interview.id}/upload-job-description`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        form.value.job_description_path = response.data.file_path
+      } else {
+        // Store file temporarily for later upload
+        pendingJobDescriptionFile.value = file
+        form.value.job_description_path = file.name // Temporary placeholder
+      }
+    } catch (error) {
+      console.error('Error uploading job description file:', error)
+      showMessage('Error uploading job description file', 'error')
+      jobDescriptionFileName.value = ''
+      form.value.job_description_path = ''
+      pendingJobDescriptionFile.value = null
+    }
   } else {
     jobDescriptionFileName.value = ''
     form.value.job_description_path = ''
+    pendingJobDescriptionFile.value = null
   }
 }
 

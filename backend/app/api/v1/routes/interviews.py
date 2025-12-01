@@ -3,7 +3,8 @@ Interview management and execution routes.
 """
 
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -22,6 +23,7 @@ from app.schemas.interview import (
     InterviewTranscriptsList,
     ChatMessageRequest
 )
+from app.utils.file_handler import FileHandler
 
 router = APIRouter()
 
@@ -301,4 +303,124 @@ async def filter_interviews_by_role_and_client(
     """
     return await service.filter_interviews_by_role_and_client(
         db, role_id, client_id, page, per_page
+    )
+
+
+# File upload and download endpoints
+
+@router.post("/{interview_id}/upload-cv", status_code=status.HTTP_200_OK)
+async def upload_cv_file(
+    interview_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    service: InterviewService = Depends(get_interview_service)
+):
+    """
+    Upload CV file for an interview.
+
+    - **interview_id**: The ID of the interview
+    - **file**: The CV file to upload (only .txt files allowed)
+    """
+    # Get interview to validate and get candidate_id
+    interview = await service.get_interview_by_id(db, interview_id)
+
+    # Save file and get path
+    file_path = await FileHandler.save_cv_file(file, interview.candidate_id, interview_id)
+
+    # Update interview with file path
+    update_data = InterviewUpdate(cv_file_path=file_path)
+    updated_interview = await service.update_interview(db, interview_id, update_data)
+
+    return {"message": "CV file uploaded successfully", "file_path": file_path}
+
+
+@router.post("/{interview_id}/upload-job-description", status_code=status.HTTP_200_OK)
+async def upload_job_description_file(
+    interview_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    service: InterviewService = Depends(get_interview_service)
+):
+    """
+    Upload job description file for an interview.
+
+    - **interview_id**: The ID of the interview
+    - **file**: The job description file to upload (only .txt files allowed)
+    """
+    # Validate interview exists
+    await service.get_interview_by_id(db, interview_id)
+
+    # Save file and get path
+    file_path = await FileHandler.save_job_description_file(file, interview_id)
+
+    # Update interview with file path
+    update_data = InterviewUpdate(job_description_path=file_path)
+    updated_interview = await service.update_interview(db, interview_id, update_data)
+
+    return {"message": "Job description file uploaded successfully", "file_path": file_path}
+
+
+@router.get("/{interview_id}/download-cv")
+async def download_cv_file(
+    interview_id: int,
+    db: Session = Depends(get_db),
+    service: InterviewService = Depends(get_interview_service)
+):
+    """
+    Download CV file for an interview.
+
+    - **interview_id**: The ID of the interview
+    """
+    interview = await service.get_interview_by_id(db, interview_id)
+
+    if not interview.cv_file_path:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="CV file not found for this interview"
+        )
+
+    if not FileHandler.file_exists(interview.cv_file_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="CV file not found on disk"
+        )
+
+    # Return file as download
+    return FileResponse(
+        path=interview.cv_file_path,
+        media_type='text/plain',
+        filename=f"cv_interview_{interview_id}.txt"
+    )
+
+
+@router.get("/{interview_id}/download-job-description")
+async def download_job_description_file(
+    interview_id: int,
+    db: Session = Depends(get_db),
+    service: InterviewService = Depends(get_interview_service)
+):
+    """
+    Download job description file for an interview.
+
+    - **interview_id**: The ID of the interview
+    """
+    interview = await service.get_interview_by_id(db, interview_id)
+
+    if not interview.job_description_path:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job description file not found for this interview"
+        )
+
+    if not FileHandler.file_exists(interview.job_description_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job description file not found on disk"
+        )
+
+    # Return file as download
+    return FileResponse(
+        path=interview.job_description_path,
+        media_type='text/plain',
+        filename=f"job_description_interview_{interview_id}.txt"
     )

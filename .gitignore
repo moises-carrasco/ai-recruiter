@@ -26,6 +26,8 @@ dist/
 *.local
 *.ini
 
+.uploads/
+
 # SQLite or local DBs (dev only)
 # If you want to include a demo DB later:
 #   !backend/app/db/demo.db
