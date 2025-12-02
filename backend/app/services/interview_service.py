@@ -554,12 +554,16 @@ Please remember to start the interview by saying hello to the candidate and intr
         # Refresh conversation history after processing message
         conversation_history_list = self.transcript_repo.get_messages_by_interview_id(db, interview_id)
 
+        print(f"DEBUG: Raw conversation history has {len(conversation_history_list)} messages")
+        for msg in conversation_history_list:
+            print(f"DEBUG: Raw message {msg.id}: role={msg.role}, content_preview='{msg.transcript_content[:50]}...'")
+
         # Filter messages to only include candidate and assistant roles
         filtered_conversation_history = self._filter_messages_only(conversation_history_list, roles=['candidate', 'assistant'])
 
         print(f"DEBUG: Filtered conversation history has {len(filtered_conversation_history)} messages")
         for msg in filtered_conversation_history:
-            print(f"DEBUG: Message {msg.id}: role={msg.role}, content_preview='{msg.transcript_content[:50]}...'")
+            print(f"DEBUG: Filtered message {msg.id}: role={msg.role}, content_preview='{msg.transcript_content[:50]}...'")
 
         if message_type == 'start_interview':
             # Return the whole filtered conversation history

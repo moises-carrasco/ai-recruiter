@@ -20,60 +20,67 @@ logger = logging.getLogger(__name__)
 class AIAgentService:
     """Service for interacting with the external AI assistant API."""
 
-    def __init__(self):
+    def __init__(self, mock_mode: bool = False):
         self.api_url = "https://api.openai.com/v1/chat/completions"
         self.auth_token = "<AI_API_KEY>"
+        self.mock_mode = mock_mode
 
     async def send_chat_message(self, conversation_payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Send conversation payload to AI assistant and return response.
-
-        For now, this simulates the AI response instead of making actual API calls.
         """
-        # Simulate AI processing delay
-        import asyncio
-        await asyncio.sleep(0.5)
+        if self.mock_mode:
+            logger.info("Using mock mode for AI assistant")
+            # Simulate processing delay
+            import asyncio
+            await asyncio.sleep(0.5)
 
-        # Mock successful response
-        mock_response = {
-            "progress": 100,
-            "providerName": "mock_openai",
-            "providerResponse": json.dumps({
-                "created": 1764385050,
-                "usage": {
-                    "completion_tokens": 150,
-                    "prompt_tokens": 200,
-                    "total_cost": 0.00015,
-                    "completion_tokens_details": {"reasoning_tokens": 100},
-                    "prompt_tokens_details": {"cached_tokens": 0},
-                    "total_tokens": 350,
-                    "currency": "USD",
-                    "completion_cost": 0.00012,
-                    "prompt_cost": 0.00003
-                },
-                "model": "mock-gpt-5-nano-2025-08-07",
-                "service_tier": "default",
-                "id": "mock-chatcmpl-test",
-                "choices": [{
-                    "finish_reason": "stop",
-                    "provider_specific_fields": {},
-                    "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "annotations": [],
-                        "content": self._generate_mock_ai_response(conversation_payload)
-                    }
-                }],
-                "object": "chat.completion"
-            }),
-            "requestId": f"mock-{datetime.utcnow().isoformat()}",
-            "status": "succeeded",
-            "success": True,
-            "text": self._generate_mock_ai_response(conversation_payload)
-        }
+            mock_text = self._generate_mock_ai_response(conversation_payload)
+            mock_response = {
+                "progress": 100,
+                "providerName": "mock_openai",
+                "providerResponse": json.dumps({
+                    "created": int(datetime.utcnow().timestamp()),
+                    "usage": {
+                        "completion_tokens": 150,
+                        "prompt_tokens": 200,
+                        "total_cost": 0.00015,
+                        "completion_tokens_details": {"reasoning_tokens": 100},
+                        "prompt_tokens_details": {"cached_tokens": 0},
+                        "total_tokens": 350,
+                        "currency": "USD",
+                        "completion_cost": 0.00012,
+                        "prompt_cost": 0.00003
+                    },
+                    "model": "mock-gpt-5-nano-2025-08-07",
+                    "service_tier": "default",
+                    "id": f"mock-chatcmpl-{datetime.utcnow().isoformat()}",
+                    "choices": [{
+                        "finish_reason": "stop",
+                        "provider_specific_fields": {},
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "annotations": [],
+                            "content": mock_text
+                        }
+                    }],
+                    "object": "chat.completion"
+                }),
+                "requestId": f"mock-{datetime.utcnow().isoformat()}",
+                "status": "succeeded",
+                "success": True,
+                "text": mock_text
+            }
 
-        logger.info(f"AI service mock response: status={mock_response['status']}, success={mock_response['success']}")
-        return mock_response
+            logger.info(f"AI service mock response: status={mock_response['status']}, success={mock_response['success']}")
+            return mock_response
+        else:
+            logger.info("Sending real chat message to AI assistant")
+            response = await self._send_real_api_request(conversation_payload)
+
+            logger.info(f"AI service response: status={response.get('status')}, success={response.get('success')}")
+            return response
 
     def _generate_mock_ai_response(self, conversation_payload: Dict[str, Any]) -> str:
         """Generate a mock AI response based on conversation context."""

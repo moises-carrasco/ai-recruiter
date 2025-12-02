@@ -40,8 +40,31 @@ api.interceptors.response.use(
   }
 )
 
-// API methods
-export const apiClient = {
+  // Custom instance for chat messages with longer timeout
+  const chatApi = axios.create({
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
+    timeout: 60000, // 60 seconds for chat messages
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+
+  // Add auth token interceptor to chatApi
+  chatApi.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem('token')
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
+      return config
+    },
+    (error) => {
+      return Promise.reject(error)
+    }
+  )
+
+  // API methods
+  export const apiClient = {
   // Authentication
   login: (credentials) => api.post('/auth/login', credentials),
   getCurrentUser: () => api.get('/auth/me'),
@@ -63,7 +86,7 @@ export const apiClient = {
   updateInterview: (id, data) => api.put(`/interviews/${id}/`, data),
   deleteInterview: (id) => api.delete(`/interviews/${id}/`),
   getInterviewByLink: (link) => api.get(`/interviews/link/${link}/`),
-  sendChatMessage: (interviewId, messageType, message = null) => api.post(`/interviews/link/${interviewId}/chat/`, { message_type: messageType, message }),
+  sendChatMessage: (interviewId, messageType, message = null) => chatApi.post(`/interviews/link/${interviewId}/chat/`, { message_type: messageType, message }),
   getInterviewTranscripts: (interviewId) => api.get(`/interviews/link/${interviewId}/transcripts/`),
   startInterview: (id) => api.post(`/interviews/${id}/start/`),
   completeInterview: (id) => api.post(`/interviews/${id}/complete/`),

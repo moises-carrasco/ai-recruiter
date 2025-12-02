@@ -79,6 +79,20 @@
               <p class="whitespace-pre-wrap">{{ message.text }}</p>
             </div>
           </div>
+
+          <!-- AI Typing Indicator -->
+          <div v-if="isAiResponding" class="flex justify-start">
+            <div class="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg text-sm max-w-xs lg:max-w-md">
+              <div class="flex items-center space-x-2">
+                <div class="flex space-x-1">
+                  <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+                  <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                  <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                </div>
+                <span class="text-xs text-gray-600">AI is thinking...</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -95,10 +109,14 @@
         ></textarea>
         <button
           @click="sendMessage"
-          :disabled="!newMessage.trim()"
+          :disabled="!newMessage.trim() || isAiResponding"
           class="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          Send
+          <span v-if="isAiResponding" class="flex items-center space-x-2">
+            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            <span>Sending...</span>
+          </span>
+          <span v-else>Send</span>
         </button>
       </div>
     </div>
@@ -134,6 +152,7 @@ const messages = ref([])
 const messagesContainer = ref(null)
 
 const newMessage = ref('')
+const isAiResponding = ref(false) // Track if AI is currently responding
 
 // Auto-scroll to bottom of messages
 const scrollToBottom = async () => {
@@ -209,18 +228,24 @@ onMounted(() => {
 })
 
 const sendMessage = async () => {
-  if (!newMessage.value.trim()) return
+  if (!newMessage.value.trim() || isAiResponding.value) return
 
   const userMessage = newMessage.value.trim()
   newMessage.value = ''
 
   try {
+    // Set AI responding state
+    isAiResponding.value = true
+
     // Add user message to chat immediately
     messages.value.push({
       id: Date.now(),
       sender: 'user',
       text: userMessage
     })
+
+    // Scroll to show the user message and typing indicator
+    await scrollToBottom()
 
     // Send message to backend and get AI response
     const response = await apiClient.sendChatMessage(interviewId, 'candidate_answer', userMessage)
@@ -235,15 +260,37 @@ const sendMessage = async () => {
         sender: 'ai',
         text: lastMessage.content
       })
+    } else {
+      console.warn('No AI response received from backend')
+      messages.value.push({
+        id: Date.now(),
+        sender: 'ai',
+        text: 'I apologize, but I encountered an issue processing your response. Please try again.'
+      })
     }
 
     // Scroll to bottom
     await scrollToBottom()
   } catch (error) {
     console.error('Error sending chat message:', error)
+
+    // Add error message to chat
+    messages.value.push({
+      id: Date.now(),
+      sender: 'ai',
+      text: 'I apologize, but I encountered a technical issue. Please try sending your message again.'
+    })
+
     // Re-add the message to input if sending failed
-    newMessage.value = userMessage
-    // Could add error handling UI here
+    if (userMessage) {
+      newMessage.value = userMessage
+    }
+
+    // Scroll to show error message
+    await scrollToBottom()
+  } finally {
+    // Always reset AI responding state
+    isAiResponding.value = false
   }
 }
 </script>
