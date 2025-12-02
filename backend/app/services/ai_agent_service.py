@@ -6,6 +6,7 @@ import json
 import logging
 from typing import Dict, Any, Optional
 from datetime import datetime
+from app.core.config import settings
 
 # Optional import for real API calls
 try:
@@ -21,8 +22,8 @@ class AIAgentService:
     """Service for interacting with the external AI assistant API."""
 
     def __init__(self, mock_mode: bool = False):
-        self.api_url = "https://api.openai.com/v1/chat/completions"
-        self.auth_token = "<AI_API_KEY>"
+        self.api_url = settings.AI_API_URL
+        self.auth_token = settings.AI_API_KEY
         self.mock_mode = mock_mode
 
     async def send_chat_message(self, conversation_payload: Dict[str, Any]) -> Dict[str, Any]:

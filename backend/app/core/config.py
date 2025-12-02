@@ -3,11 +3,13 @@ Application configuration settings.
 """
 
 from typing import List
+from pathlib import Path
 try:
     from pydantic_settings import BaseSettings
 except ImportError:
     from pydantic import BaseSettings
 
+ENV_PATH = Path(__file__).resolve().parents[2] 
 
 class Settings(BaseSettings):
     """Application settings."""
@@ -37,7 +39,7 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
     
     class Config:
-        env_file = ".env"
+        env_file = f"{ENV_PATH}/.env"
 
 
 settings = Settings()

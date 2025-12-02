@@ -115,7 +115,7 @@ Services/API (HTTP Communication)
    ```
 
 4. **Environment configuration:**
-   Create a `.env` file in the backend directory:
+   Create a `.env` file in the `backend/` directory:
    ```bash
    # Database
    DATABASE_URL=sqlite:///./interview_system.db
@@ -126,8 +126,9 @@ Services/API (HTTP Communication)
    ACCESS_TOKEN_EXPIRE_MINUTES=30
 
    # AI Service Configuration
+   # IMPORTANT: Place your AI assistant URL and token here
    AI_API_URL=https://api.openai.com/v1/chat/completions
-   AI_AUTH_TOKEN=<AI_API_KEY>
+   AI_AUTH_TOKEN=your-ai-auth-token-here
 
    # File Upload Configuration
    MAX_UPLOAD_SIZE=10485760  # 10MB in bytes
