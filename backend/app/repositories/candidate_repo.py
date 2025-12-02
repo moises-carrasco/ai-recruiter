@@ -22,10 +22,10 @@ class CandidateRepository(BaseRepository[Candidate]):
         return db.query(self.model).filter(self.model.id_document == id_document).first()
 
     async def search_by_name(
-        self, 
-        db: Session, 
-        name: str, 
-        skip: int = 0, 
+        self,
+        db: Session,
+        name: str,
+        skip: int = 0,
         limit: int = 100
     ) -> List[Candidate]:
         """Search candidates by name (first_name or last_name)."""
@@ -39,21 +39,23 @@ class CandidateRepository(BaseRepository[Candidate]):
                     func.concat(self.model.first_name, ' ', self.model.last_name).ilike(search_term)
                 )
             )
+            .order_by(self.model.first_name, self.model.last_name)
             .offset(skip)
             .limit(limit)
             .all()
         )
 
     async def get_active_candidates(
-        self, 
-        db: Session, 
-        skip: int = 0, 
+        self,
+        db: Session,
+        skip: int = 0,
         limit: int = 100
     ) -> List[Candidate]:
         """Get all active candidates."""
         return (
             db.query(self.model)
             .filter(self.model.is_active == 1)
+            .order_by(self.model.first_name, self.model.last_name)
             .offset(skip)
             .limit(limit)
             .all()
@@ -89,7 +91,8 @@ class CandidateRepository(BaseRepository[Candidate]):
             email_term = f"%{email}%"
             query = query.filter(self.model.email.ilike(email_term))
 
-        return query.offset(skip).limit(limit).all()
+        return query.order_by(self.model.first_name, self.model.last_name)\
+            .offset(skip).limit(limit).all()
 
     async def count_filtered_candidates(
         self,
