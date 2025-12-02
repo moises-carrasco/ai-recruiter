@@ -19,6 +19,17 @@ An AI-powered web application that conducts technical interviews with Globant wo
 - 📋 **CRUD Operations**: Complete management of candidates, interviews, and users
 - 🎯 **Objective Evaluation**: Focus on quantifiable technical skills only
 
+## 📁 Documentation
+
+The project includes comprehensive documentation in the `docs/` folder:
+
+- **📋 Backlog & User Stories**: Complete user stories and requirements (`docs/backlog - user_stories.md`)
+- **📝 Project Definition**: Detailed project scope and objectives (`docs/project definition.md`)
+- **🎨 Design Mockups**: UI/UX design references and wireframes (`docs/mockups/`)
+- **📄 Sample Documents**: Example CVs and job descriptions for testing (`docs/candidate_cv_jd_samples/`)
+
+These resources provide guidance for development, testing, and understanding the project requirements.
+
 ## 🏗️ Architecture & Technology Stack
 
 ### Backend Architecture
