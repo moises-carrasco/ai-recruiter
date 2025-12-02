@@ -85,9 +85,12 @@ class FileHandler:
         upload_dir = cls.get_upload_dir()
         file_path = upload_dir / filename
 
-        # Delete existing file if provided
-        if existing_path and cls.file_exists(existing_path):
-            cls.delete_file(existing_path)
+        # Delete existing file if provided (handle both relative and absolute paths)
+        if existing_path:
+            # If it's a relative path, convert to absolute for deletion
+            abs_existing_path = existing_path if os.path.isabs(existing_path) else cls.get_absolute_path(existing_path)
+            if cls.file_exists(abs_existing_path):
+                cls.delete_file(abs_existing_path)
 
         # Save file
         with open(file_path, "wb") as buffer:
@@ -109,9 +112,12 @@ class FileHandler:
         upload_dir = cls.get_upload_dir()
         file_path = upload_dir / filename
 
-        # Delete existing file if provided
-        if existing_path and cls.file_exists(existing_path):
-            cls.delete_file(existing_path)
+        # Delete existing file if provided (handle both relative and absolute paths)
+        if existing_path:
+            # If it's a relative path, convert to absolute for deletion
+            abs_existing_path = existing_path if os.path.isabs(existing_path) else cls.get_absolute_path(existing_path)
+            if cls.file_exists(abs_existing_path):
+                cls.delete_file(abs_existing_path)
 
         # Save file
         with open(file_path, "wb") as buffer:
@@ -147,3 +153,17 @@ class FileHandler:
     def file_exists(cls, file_path: str) -> bool:
         """Check if file exists."""
         return os.path.exists(file_path)
+
+    @classmethod
+    def get_absolute_path(cls, relative_path: str) -> str:
+        """Convert relative path to absolute path based on project root."""
+        try:
+            # Use absolute path based on project root
+            current_file = Path(__file__).resolve()
+            project_root = current_file.parent.parent.parent.parent  # Go up to project root
+            absolute_path = project_root / relative_path
+            return str(absolute_path)
+        except Exception as e:
+            print(f"ERROR: Failed to get absolute path for {relative_path}: {e}")
+            # Fallback: assume relative_path is already absolute or handle as-is
+            return relative_path

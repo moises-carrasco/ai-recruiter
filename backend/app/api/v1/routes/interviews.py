@@ -332,7 +332,9 @@ async def upload_cv_file(
         )
 
     # Save file and get path (delete existing file if present)
-    file_path = await FileHandler.save_cv_file(file, interview.candidate_id, interview_id, interview.cv_file_path)
+    # Convert existing path to absolute for proper deletion
+    existing_path = FileHandler.get_absolute_path(interview.cv_file_path) if interview.cv_file_path else None
+    file_path = await FileHandler.save_cv_file(file, interview.candidate_id, interview_id, existing_path)
 
     # Update interview with file path
     update_data = InterviewUpdate(cv_file_path=file_path)
@@ -364,7 +366,9 @@ async def upload_job_description_file(
         )
 
     # Save file and get path (delete existing file if present)
-    file_path = await FileHandler.save_job_description_file(file, interview_id, interview.job_description_path)
+    # Convert existing path to absolute for proper deletion
+    existing_path = FileHandler.get_absolute_path(interview.job_description_path) if interview.job_description_path else None
+    file_path = await FileHandler.save_job_description_file(file, interview_id, existing_path)
 
     # Update interview with file path
     update_data = InterviewUpdate(job_description_path=file_path)
@@ -392,7 +396,10 @@ async def download_cv_file(
             detail="CV file not found for this interview"
         )
 
-    if not FileHandler.file_exists(interview.cv_file_path):
+    # Convert relative path to absolute path
+    absolute_path = FileHandler.get_absolute_path(interview.cv_file_path)
+
+    if not FileHandler.file_exists(absolute_path):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="CV file not found on disk"
@@ -403,7 +410,7 @@ async def download_cv_file(
 
     # Return file as download
     return FileResponse(
-        path=interview.cv_file_path,
+        path=absolute_path,
         media_type='text/plain',
         filename=f"cv_interview_{interview_id}{file_extension}"
     )
@@ -428,7 +435,10 @@ async def download_job_description_file(
             detail="Job description file not found for this interview"
         )
 
-    if not FileHandler.file_exists(interview.job_description_path):
+    # Convert relative path to absolute path
+    absolute_path = FileHandler.get_absolute_path(interview.job_description_path)
+
+    if not FileHandler.file_exists(absolute_path):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Job description file not found on disk"
@@ -439,7 +449,7 @@ async def download_job_description_file(
 
     # Return file as download
     return FileResponse(
-        path=interview.job_description_path,
+        path=absolute_path,
         media_type='text/plain',
         filename=f"job_description_interview_{interview_id}{file_extension}"
     )

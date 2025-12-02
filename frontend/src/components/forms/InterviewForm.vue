@@ -199,13 +199,13 @@
         </p>
         <!-- Download link for existing CV file -->
         <div v-if="isEditMode && props.interview?.cv_file_path" class="mt-2">
-          <a
-            :href="`${api.defaults.baseURL}/interviews/${props.interview.id}/download-cv`"
-            target="_blank"
-            class="text-blue-600 hover:text-blue-800 text-sm underline"
+          <button
+            type="button"
+            @click="downloadCvFile"
+            class="text-blue-600 hover:text-blue-800 text-sm underline bg-transparent border-none cursor-pointer"
           >
             Download current CV file
-          </a>
+          </button>
         </div>
       </div>
 
@@ -228,13 +228,13 @@
         </p>
         <!-- Download link for existing job description file -->
         <div v-if="isEditMode && props.interview?.job_description_path" class="mt-2">
-          <a
-            :href="`${api.defaults.baseURL}/interviews/${props.interview.id}/download-job-description`"
-            target="_blank"
-            class="text-blue-600 hover:text-blue-800 text-sm underline"
+          <button
+            type="button"
+            @click="downloadJobDescriptionFile"
+            class="text-blue-600 hover:text-blue-800 text-sm underline bg-transparent border-none cursor-pointer"
           >
             Download current job description file
-          </a>
+          </button>
         </div>
       </div>
 
@@ -598,14 +598,66 @@ const handleSubmit = async () => {
       interviewData.scheduled_datetime = new Date(interviewData.scheduled_datetime).toISOString()
     }
 
-    // Remove empty optional fields
-    if (!interviewData.cv_file_path) delete interviewData.cv_file_path
-    if (!interviewData.job_description_path) delete interviewData.job_description_path
-    if (!interviewData.interview_guidelines) delete interviewData.interview_guidelines
-    if (!interviewData.notes) delete interviewData.notes
+    // For new interviews with pending files, create interview first, then upload files
+    if (!isEditMode.value && (pendingCvFile.value || pendingJobDescriptionFile.value)) {
+      console.log('Creating interview first, then uploading pending files...')
 
-    console.log('Final interview data to emit:', interviewData)
-    emit('save', interviewData)
+      // Create interview without file paths first
+      const interviewDataWithoutFiles = { ...interviewData }
+      delete interviewDataWithoutFiles.cv_file_path
+      delete interviewDataWithoutFiles.job_description_path
+
+      console.log('Creating interview without files:', interviewDataWithoutFiles)
+      const createdInterview = await api.post('/interviews/', interviewDataWithoutFiles)
+      console.log('Interview created:', createdInterview.data)
+
+      const interviewId = createdInterview.data.id
+
+      // Now upload pending files using the new interview ID
+      const updatedPaths = {}
+
+      if (pendingCvFile.value) {
+        console.log('Uploading CV file...')
+        const cvFormData = new FormData()
+        cvFormData.append('file', pendingCvFile.value)
+        const cvResponse = await api.post(`/interviews/${interviewId}/upload-cv`, cvFormData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        updatedPaths.cv_file_path = cvResponse.data.file_path
+        console.log('CV uploaded:', cvResponse.data)
+      }
+
+      if (pendingJobDescriptionFile.value) {
+        console.log('Uploading job description file...')
+        const jdFormData = new FormData()
+        jdFormData.append('file', pendingJobDescriptionFile.value)
+        const jdResponse = await api.post(`/interviews/${interviewId}/upload-job-description`, jdFormData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        updatedPaths.job_description_path = jdResponse.data.file_path
+        console.log('Job description uploaded:', jdResponse.data)
+      }
+
+      // Update interview with file paths if any files were uploaded
+      if (Object.keys(updatedPaths).length > 0) {
+        console.log('Updating interview with file paths:', updatedPaths)
+        await api.put(`/interviews/${interviewId}/`, updatedPaths)
+      }
+
+      // Emit save event with the created interview data
+      emit('save', { ...createdInterview.data, ...updatedPaths })
+
+    } else {
+      // Normal flow for edits or interviews without files
+      // Remove empty optional fields
+      if (!interviewData.cv_file_path) delete interviewData.cv_file_path
+      if (!interviewData.job_description_path) delete interviewData.job_description_path
+      if (!interviewData.interview_guidelines) delete interviewData.interview_guidelines
+      if (!interviewData.notes) delete interviewData.notes
+
+      console.log('Final interview data to emit:', interviewData)
+      emit('save', interviewData)
+    }
 
     if (!isEditMode.value) {
       resetForm()
@@ -616,6 +668,72 @@ const handleSubmit = async () => {
   } catch (error) {
     console.error('Error in form submission:', error)
     submitError.value = error.message || 'An error occurred while saving the interview'
+  }
+}
+
+const downloadCvFile = async () => {
+  try {
+    const response = await api.get(`/interviews/${props.interview.id}/download-cv`, {
+      responseType: 'blob' // Important for file downloads
+    })
+
+    // Create a blob URL and trigger download
+    const blob = new Blob([response.data], { type: 'text/plain' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+
+    // Extract filename from response headers or use default
+    const contentDisposition = response.headers['content-disposition']
+    let filename = `cv_interview_${props.interview.id}.txt`
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1].replace(/['"]/g, '')
+      }
+    }
+
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('Error downloading CV file:', error)
+    showMessage('Error downloading CV file', 'error')
+  }
+}
+
+const downloadJobDescriptionFile = async () => {
+  try {
+    const response = await api.get(`/interviews/${props.interview.id}/download-job-description`, {
+      responseType: 'blob' // Important for file downloads
+    })
+
+    // Create a blob URL and trigger download
+    const blob = new Blob([response.data], { type: 'text/plain' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+
+    // Extract filename from response headers or use default
+    const contentDisposition = response.headers['content-disposition']
+    let filename = `job_description_interview_${props.interview.id}.txt`
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1].replace(/['"]/g, '')
+      }
+    }
+
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('Error downloading job description file:', error)
+    showMessage('Error downloading job description file', 'error')
   }
 }
 
