@@ -233,9 +233,21 @@ const handleSaveInterview = async (interviewData) => {
   formLoading.value = true
   try {
     if (editingInterview.value) {
+      // Editing existing interview
       await interviewsStore.updateInterview(editingInterview.value.id, interviewData)
       showMessage('Interview updated successfully', 'success')
+    } else if (interviewData.id) {
+      // Interview was created by form internally (has id) but not in edit mode
+      // Add it to the store's list manually since it wasn't created through the store
+      interviewsStore.interviews.unshift(interviewData)
+      interviewsStore.pagination.total += 1
+      // Reset to first page if needed
+      if (interviewsStore.pagination.page > 1) {
+        interviewsStore.pagination.page = 1
+      }
+      showMessage('Interview created successfully', 'success')
     } else {
+      // Normal creation flow (no files)
       await interviewsStore.createInterview(interviewData)
       showMessage('Interview created successfully', 'success')
     }

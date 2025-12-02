@@ -80,8 +80,8 @@ Services/API (HTTP Communication)
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Python**: 3.8 or higher
-- **Node.js**: 16.0 or higher
+- **Python**: 3.10
+- **Node.js**: 18.0 or higher
 - **SQLite**: 3.x (usually pre-installed)
 - **Git**: For version control
 
