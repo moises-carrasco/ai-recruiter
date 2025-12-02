@@ -274,9 +274,15 @@ const handleSubmit = async () => {
     }
     
     emit('save', candidateData)
-    
+
+    // Reset form after successful creation (for create mode only)
     if (!isEditMode.value) {
-      resetForm()
+      // Use nextTick to ensure modal closes first before resetting
+      import('vue').then(({ nextTick }) => {
+        nextTick(() => {
+          resetForm()
+        })
+      })
     }
   } catch (error) {
     submitError.value = error.message || 'An error occurred while saving the candidate'
@@ -294,8 +300,14 @@ watch(() => form.value.last_name, (value) => validateField('last_name', value))
 watch(() => form.value.email, (value) => validateField('email', value))
 watch(() => form.value.id_document, (value) => validateField('id_document', value))
 
-watch(() => props.candidate, () => {
-  loadCandidateData()
+watch(() => props.candidate, (newCandidate, oldCandidate) => {
+  // Only load data if we have a candidate and it's different from before
+  if (newCandidate && newCandidate !== oldCandidate) {
+    loadCandidateData()
+  } else if (!newCandidate && oldCandidate) {
+    // If switching from edit to create mode, reset the form
+    resetForm()
+  }
 }, { immediate: true })
 
 // Lifecycle

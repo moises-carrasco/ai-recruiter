@@ -10,7 +10,7 @@
           </p>
         </div>
         <button
-          @click="showCreateForm = true"
+          @click="openCreateForm"
           class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -165,6 +165,13 @@ const handlePageChange = async (page) => {
   await loadCandidates(filters)
 }
 
+const openCreateForm = () => {
+  // Clear any previous errors and reset form state
+  candidatesStore.clearError()
+  selectedCandidate.value = null // Ensure we're in create mode
+  showCreateForm.value = true
+}
+
 const handleEditCandidate = (candidate) => {
   selectedCandidate.value = candidate
   showEditForm.value = true
@@ -174,14 +181,13 @@ const handleDeleteCandidate = async (candidateId) => {
   try {
     await candidatesStore.deleteCandidate(candidateId)
     successMessage.value = 'Candidate deleted successfully'
-    
+
     // Auto-hide success message after 3 seconds
     setTimeout(() => {
       successMessage.value = ''
     }, 3000)
-    
-    // Reload candidates to reflect changes
-    await loadCandidates(candidatesStore.filters)
+
+    // Note: No need to reload candidates - store already marked candidate as inactive
   } catch (error) {
     console.error('Error deleting candidate:', error)
   }
@@ -195,17 +201,19 @@ const handleSaveCandidate = async (candidateData) => {
     } else {
       await candidatesStore.createCandidate(candidateData)
       successMessage.value = 'Candidate created successfully'
+
+      // Clear any potential lingering errors after successful creation
+      candidatesStore.clearError()
     }
-    
+
     closeModal()
-    
+
     // Auto-hide success message after 3 seconds
     setTimeout(() => {
       successMessage.value = ''
     }, 3000)
-    
-    // Reload candidates to reflect changes
-    await loadCandidates(candidatesStore.filters)
+
+    // Note: No need to reload candidates - store already updated the local list
   } catch (error) {
     console.error('Error saving candidate:', error)
   }
