@@ -24,6 +24,7 @@ from app.schemas.interview import (
     ChatMessageRequest
 )
 from app.utils.file_handler import FileHandler
+from pathlib import Path
 
 router = APIRouter()
 
@@ -319,13 +320,19 @@ async def upload_cv_file(
     Upload CV file for an interview.
 
     - **interview_id**: The ID of the interview
-    - **file**: The CV file to upload (only .txt files allowed)
+    - **file**: The CV file to upload (only .txt and .md files allowed)
     """
-    # Get interview to validate and get candidate_id
-    interview = await service.get_interview_by_id(db, interview_id)
+    # Get interview model directly from repository to validate and get candidate_id
+    interview_repo = service.interview_repo
+    interview = await interview_repo.get_by_id(db, interview_id)
+    if not interview:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found"
+        )
 
-    # Save file and get path
-    file_path = await FileHandler.save_cv_file(file, interview.candidate_id, interview_id)
+    # Save file and get path (delete existing file if present)
+    file_path = await FileHandler.save_cv_file(file, interview.candidate_id, interview_id, interview.cv_file_path)
 
     # Update interview with file path
     update_data = InterviewUpdate(cv_file_path=file_path)
@@ -345,13 +352,19 @@ async def upload_job_description_file(
     Upload job description file for an interview.
 
     - **interview_id**: The ID of the interview
-    - **file**: The job description file to upload (only .txt files allowed)
+    - **file**: The job description file to upload (only .txt and .md files allowed)
     """
-    # Validate interview exists
-    await service.get_interview_by_id(db, interview_id)
+    # Get interview model directly from repository to check for existing file
+    interview_repo = service.interview_repo
+    interview = await interview_repo.get_by_id(db, interview_id)
+    if not interview:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found"
+        )
 
-    # Save file and get path
-    file_path = await FileHandler.save_job_description_file(file, interview_id)
+    # Save file and get path (delete existing file if present)
+    file_path = await FileHandler.save_job_description_file(file, interview_id, interview.job_description_path)
 
     # Update interview with file path
     update_data = InterviewUpdate(job_description_path=file_path)
@@ -385,11 +398,14 @@ async def download_cv_file(
             detail="CV file not found on disk"
         )
 
+    # Get file extension from the saved file
+    file_extension = Path(interview.cv_file_path).suffix or '.txt'
+
     # Return file as download
     return FileResponse(
         path=interview.cv_file_path,
         media_type='text/plain',
-        filename=f"cv_interview_{interview_id}.txt"
+        filename=f"cv_interview_{interview_id}{file_extension}"
     )
 
 
@@ -418,9 +434,12 @@ async def download_job_description_file(
             detail="Job description file not found on disk"
         )
 
+    # Get file extension from the saved file
+    file_extension = Path(interview.job_description_path).suffix or '.txt'
+
     # Return file as download
     return FileResponse(
         path=interview.job_description_path,
         media_type='text/plain',
-        filename=f"job_description_interview_{interview_id}.txt"
+        filename=f"job_description_interview_{interview_id}{file_extension}"
     )

@@ -14,16 +14,31 @@ from ..core.config import settings
 class FileHandler:
     """Handles file operations for interview uploads."""
 
-    # Allowed file types (only .txt as per requirements)
-    ALLOWED_EXTENSIONS = {'.txt'}
+    # Allowed file types (.txt and .md files)
+    ALLOWED_EXTENSIONS = {'.txt', '.md'}
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
     @classmethod
     def get_upload_dir(cls) -> Path:
         """Get the upload directory path."""
-        upload_dir = Path(settings.UPLOAD_DIR) if hasattr(settings, 'UPLOAD_DIR') else Path("uploads")
-        upload_dir.mkdir(exist_ok=True)
-        return upload_dir
+        try:
+            # Use absolute path based on project root
+            current_file = Path(__file__).resolve()
+            project_root = current_file.parent.parent.parent.parent  # Go up to project root
+            upload_dir_name = getattr(settings, 'UPLOAD_DIR', 'uploads')
+            upload_dir = project_root / upload_dir_name
+
+            # Ensure directory exists
+            upload_dir.mkdir(parents=True, exist_ok=True)
+            print(f"DEBUG: Upload directory created/verified at: {upload_dir}")
+            return upload_dir
+        except Exception as e:
+            print(f"ERROR: Failed to create upload directory: {e}")
+            # Fallback to current directory
+            fallback_dir = Path.cwd() / "uploads"
+            fallback_dir.mkdir(parents=True, exist_ok=True)
+            print(f"DEBUG: Using fallback upload directory: {fallback_dir}")
+            return fallback_dir
 
     @classmethod
     def validate_file(cls, file: UploadFile) -> None:
@@ -33,7 +48,7 @@ class FileHandler:
         if file_ext not in cls.ALLOWED_EXTENSIONS:
             raise HTTPException(
                 status_code=400,
-                detail=f"Only .txt files are allowed. Got: {file_ext}"
+                detail=f"Only .txt and .md files are allowed. Got: {file_ext}"
             )
 
         # Check file size
@@ -48,48 +63,64 @@ class FileHandler:
             )
 
     @classmethod
-    def generate_cv_filename(cls, candidate_id: int, interview_id: int) -> str:
+    def generate_cv_filename(cls, candidate_id: int, interview_id: int, extension: str = '.txt') -> str:
         """Generate CV filename according to naming convention."""
         timestamp = int(datetime.utcnow().timestamp())
-        return f"cv_{candidate_id}_int{interview_id}_{timestamp}.txt"
+        return f"cv_{candidate_id}_int{interview_id}_{timestamp}{extension}"
 
     @classmethod
-    def generate_job_description_filename(cls, interview_id: int) -> str:
+    def generate_job_description_filename(cls, interview_id: int, extension: str = '.txt') -> str:
         """Generate job description filename according to naming convention."""
         timestamp = int(datetime.utcnow().timestamp())
-        return f"job_description_int{interview_id}_{timestamp}.txt"
+        return f"job_description_int{interview_id}_{timestamp}{extension}"
 
     @classmethod
-    async def save_cv_file(cls, file: UploadFile, candidate_id: int, interview_id: int) -> str:
-        """Save CV file and return relative path."""
+    async def save_cv_file(cls, file: UploadFile, candidate_id: int, interview_id: int, existing_path: Optional[str] = None) -> str:
+        """Save CV file and return relative path. Optionally delete existing file."""
         cls.validate_file(file)
 
-        filename = cls.generate_cv_filename(candidate_id, interview_id)
+        # Extract original file extension
+        original_extension = Path(file.filename).suffix.lower()
+        filename = cls.generate_cv_filename(candidate_id, interview_id, original_extension)
         upload_dir = cls.get_upload_dir()
         file_path = upload_dir / filename
+
+        # Delete existing file if provided
+        if existing_path and cls.file_exists(existing_path):
+            cls.delete_file(existing_path)
 
         # Save file
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
         # Return relative path from project root
-        return str(file_path.relative_to(Path.cwd()))
+        current_file = Path(__file__).resolve()
+        project_root = current_file.parent.parent.parent.parent
+        return str(file_path.relative_to(project_root))
 
     @classmethod
-    async def save_job_description_file(cls, file: UploadFile, interview_id: int) -> str:
-        """Save job description file and return relative path."""
+    async def save_job_description_file(cls, file: UploadFile, interview_id: int, existing_path: Optional[str] = None) -> str:
+        """Save job description file and return relative path. Optionally delete existing file."""
         cls.validate_file(file)
 
-        filename = cls.generate_job_description_filename(interview_id)
+        # Extract original file extension
+        original_extension = Path(file.filename).suffix.lower()
+        filename = cls.generate_job_description_filename(interview_id, original_extension)
         upload_dir = cls.get_upload_dir()
         file_path = upload_dir / filename
+
+        # Delete existing file if provided
+        if existing_path and cls.file_exists(existing_path):
+            cls.delete_file(existing_path)
 
         # Save file
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
         # Return relative path from project root
-        return str(file_path.relative_to(Path.cwd()))
+        current_file = Path(__file__).resolve()
+        project_root = current_file.parent.parent.parent.parent
+        return str(file_path.relative_to(project_root))
 
     @classmethod
     def read_file_content(cls, file_path: str) -> str:

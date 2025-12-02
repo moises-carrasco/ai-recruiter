@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     AI_MODEL: str = "gpt-3.5-turbo"
     
     # File Upload
-    UPLOAD_DIR: str = "./uploads"
+    UPLOAD_DIR: str = "uploads"
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
     
     class Config:

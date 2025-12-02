@@ -3,6 +3,7 @@ Interview service for interview management and execution operations.
 """
 
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
@@ -33,6 +34,7 @@ from ..utils.file_handler import FileHandler
 from ..models.lookup import LookupItem
 from ..models.user import User
 from ..models.candidate import Candidate
+from ..core.logging_config import get_logger
 from .ai_agent_service import AIAgentService
 
 
@@ -43,6 +45,7 @@ class InterviewService:
         self.interview_repo = InterviewRepository()
         self.transcript_repo = InterviewTranscriptRepository()
         self.feedback_repo = InterviewFeedbackRepository()
+        self.logger = get_logger(__name__)
 
     async def create_interview(self, db: Session, interview_data: InterviewCreate) -> InterviewOut:
         """Create a new interview with generated link and validation."""
@@ -123,7 +126,13 @@ class InterviewService:
         interview_data: InterviewUpdate
     ) -> InterviewOut:
         """Update an existing interview."""
-        interview = await self.get_interview_by_id(db, interview_id)
+        # Get the SQLAlchemy model directly from repository
+        interview_model = await self.interview_repo.get_by_id(db, interview_id)
+        if not interview_model:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Interview not found"
+            )
 
         # Validate references if they're being updated
         if any(key in interview_data.model_dump(exclude_unset=True)
@@ -131,7 +140,7 @@ class InterviewService:
             await self._validate_interview_references(db, interview_data, exclude_id=interview_id)
 
         update_dict = interview_data.model_dump(exclude_unset=True)
-        updated_interview = await self.interview_repo.update(db, interview, update_dict)
+        updated_interview = await self.interview_repo.update(db, interview_model, update_dict)
 
         return await self._enrich_interview_data(db, updated_interview)
 
@@ -441,16 +450,29 @@ class InterviewService:
             # Get interview data for kickoff message
             interview = await self.get_interview_by_id(db, interview_id)
 
+            # Read job description and CV file contents
+            job_description_content = self._read_file_content_safe(interview.job_description_path)
+            cv_content = self._read_file_content_safe(interview.cv_file_path)
+
             # Create kickoff system message
             kickoff_msg = f"""Hi Interviewer_Expert you are just about to start a new interview with a candidate. Here is the data:
-candidate = {interview.candidate_name}
-seniority = {interview.seniority_text}
-role = {interview.role_text}
-Job Description = {interview.interview_guidelines or 'Not provided'}
-cv = {interview.cv_file_path or 'Not provided'}
+<========= candidate_name =========>
+{interview.candidate_name}
+<=========  seniority =========>
+{interview.seniority_text}
+<========= role =========>
+{interview.role_text}
+<========= job_description =========>
+{job_description_content}
+<========= cv =========>
+{cv_content}
+<========= end =========>
 
 This data is just internal information and it represents the parameter that you will be using to conduct the interview.
 Please remember to start the interview by saying hello to the candidate and introducing yourself"""
+
+            # Log kickoff message for debugging
+            self.logger.info(f"Kickoff message for interview {interview_id}: {kickoff_msg}")
 
             # Store system message
             system_transcript = {
@@ -464,6 +486,31 @@ Please remember to start the interview by saying hello to the candidate and intr
 
             # Refresh conversation history after adding system message
             conversation_history_list = self.transcript_repo.get_messages_by_interview_id(db, interview_id)
+
+            # Format payload for AI
+            conversation_payload = self._format_messages_payload_ai(conversation_history_list)
+
+            # Send to AI service
+            ai_service = AIAgentService()
+            ai_response = await ai_service.send_chat_message(conversation_payload)
+
+            # Check if AI response was successful
+            if ai_response.get('status') != 'succeeded':
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="AI service error: " + ai_response.get('error', 'Unknown error')
+                )
+
+            # Extract and store AI response
+            message_from_ai = ai_response.get('text', '')
+            ai_transcript = {
+                'interview_id': interview_id,
+                'transcript_content': message_from_ai,
+                'role': 'assistant',
+                'started_at': current_time,
+                'completed_at': current_time
+            }
+            await self.transcript_repo.create(db, ai_transcript)
 
         elif message_type == 'candidate_answer':
             # Store candidate message
@@ -504,8 +551,8 @@ Please remember to start the interview by saying hello to the candidate and intr
             }
             await self.transcript_repo.create(db, ai_transcript)
 
-            # Refresh conversation history after adding AI response
-            conversation_history_list = self.transcript_repo.get_messages_by_interview_id(db, interview_id)
+        # Refresh conversation history after processing message
+        conversation_history_list = self.transcript_repo.get_messages_by_interview_id(db, interview_id)
 
         # Filter messages to only include candidate and assistant roles
         filtered_conversation_history = self._filter_messages_only(conversation_history_list, roles=['candidate', 'assistant'])
@@ -570,6 +617,27 @@ Please remember to start the interview by saying hello to the candidate and intr
             'revision': 3,
             'revisionName': '3'
         }
+
+    def _read_file_content_safe(self, relative_path: Optional[str]) -> str:
+        """Safely read file content with error handling and length limiting.
+
+        Args:
+            relative_path: Relative path to the file from project root
+
+        Returns:
+            File content (max 2000 chars) or error message
+        """
+        if not relative_path:
+            return "Not provided"
+
+        try:
+            # Build full path: project_root + relative_path
+            project_root = Path(__file__).resolve().parent.parent.parent.parent
+            full_path = project_root / relative_path
+            content = FileHandler.read_file_content(str(full_path))[:2000]  # Limit to 2000 chars
+            return content
+        except Exception as e:
+            return f"Error reading file: {str(e)}"
 
     async def _get_interview_with_feedback(self, db: Session, interview_id: int) -> InterviewWithFeedbackOut:
         """Get interview with associated feedback and transcript."""

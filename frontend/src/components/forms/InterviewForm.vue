@@ -189,11 +189,11 @@
           id="cvFile"
           ref="cvFileInput"
           type="file"
-          accept=".txt"
+          accept=".txt,.md"
           @change="handleCvFileChange"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-        <p class="mt-1 text-sm text-gray-500">Accepted formats: TXT (max 10MB)</p>
+        <p class="mt-1 text-sm text-gray-500">Accepted formats: TXT, MD (max 10MB)</p>
         <p v-if="cvFileName" class="mt-1 text-sm text-green-600">
           Selected: {{ cvFileName }}
         </p>
@@ -218,11 +218,11 @@
           id="jobDescriptionFile"
           ref="jobDescriptionFileInput"
           type="file"
-          accept=".txt"
+          accept=".txt,.md"
           @change="handleJobDescriptionFileChange"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-        <p class="mt-1 text-sm text-gray-500">Accepted formats: TXT (max 10MB)</p>
+        <p class="mt-1 text-sm text-gray-500">Accepted formats: TXT, MD (max 10MB)</p>
         <p v-if="jobDescriptionFileName" class="mt-1 text-sm text-green-600">
           Selected: {{ jobDescriptionFileName }}
         </p>
