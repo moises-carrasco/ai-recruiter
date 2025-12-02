@@ -135,10 +135,29 @@ Services/API (HTTP Communication)
    ALLOWED_EXTENSIONS=txt,md
    ```
 
-5. **Initialize database:**
+5. **Database initialization:**
+   
+   **Option A: Using Python initialization script (Recommended):**
    ```bash
    python -m app.db.init_db
    ```
+   
+   **Option B: Manual database creation using SQLite3:**
+   ```bash
+   # Navigate to project root directory
+   cd ..
+   
+   # Create database using schema.sql
+   sqlite3 interview_system.db < backend/db/schema.sql
+   
+   # Verify database creation
+   sqlite3 interview_system.db ".tables"
+   ```
+   
+   **Database Configuration:**
+   - The database file path is configured in the `backend/app/core/config.py` file with the `DATABASE_URL` variable
+   - Default location: `./interview_system.db` (project root directory)
+   - The schema file is located at: `backend/db/schema.sql`
 
 6. **Run backend server:**
    ```bash
