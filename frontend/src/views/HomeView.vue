@@ -184,14 +184,45 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { apiClient } from '../utils/api.js'
 
-// Mock data - replace with actual API calls
+// Reactive data
 const metrics = ref({
-  totalInterviews: 24,
-  completedInterviews: 18,
-  pendingInterviews: 3,
-  activeCandidates: 12
+  totalInterviews: 0,
+  completedInterviews: 0,
+  pendingInterviews: 0,
+  activeCandidates: 0
+})
+
+const loading = ref(true)
+const error = ref(null)
+
+// Fetch dashboard statistics on component mount
+const fetchDashboardStatistics = async () => {
+  try {
+    loading.value = true
+    error.value = null
+    const response = await apiClient.getDashboardStatistics()
+
+    // Transform snake_case to camelCase to match template expectations
+    metrics.value = {
+      totalInterviews: response.data.total_interviews,
+      completedInterviews: response.data.completed_interviews,
+      pendingInterviews: response.data.pending_interviews,
+      activeCandidates: response.data.active_candidates
+    }
+  } catch (err) {
+    console.error('Error fetching dashboard statistics:', err)
+    error.value = 'Failed to load dashboard statistics'
+    // Keep default values on error
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchDashboardStatistics()
 })
 
 const recentInterviews = ref([

@@ -131,6 +131,13 @@ class CandidateRepository(BaseRepository[Candidate]):
             query = query.filter(self.model.id != exclude_id)
         return query.first() is not None
 
+    async def count_active_candidates(self, db: Session) -> int:
+        """Count total number of active candidates."""
+        from sqlalchemy import func
+        return db.query(func.count(self.model.id)).filter(
+            self.model.is_active == 1
+        ).scalar()
+
     async def check_id_document_exists(self, db: Session, id_document: str, exclude_id: Optional[int] = None) -> bool:
         """Check if ID document already exists, optionally excluding a specific ID."""
         query = db.query(self.model).filter(

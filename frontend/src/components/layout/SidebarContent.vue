@@ -15,7 +15,7 @@
       </li>
       
       <li>
-        <router-link 
+        <router-link
           to="/interviews"
           class="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors duration-200"
           :class="{ 'text-blue-700 bg-blue-50 font-medium': $route.path.startsWith('/interviews') }"
@@ -23,10 +23,7 @@
           <svg class="w-5 h-5 mr-3" :class="{ 'text-blue-500': $route.path.startsWith('/interviews') }" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
           </svg>
-          <span class="flex-1">Interviews</span>
-          <span v-if="pendingInterviews > 0" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-            {{ pendingInterviews }}
-          </span>
+          Interviews
         </router-link>
       </li>
       
@@ -99,14 +96,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
-
-// Mock data for pending interviews badge
-// TODO: Replace with actual data from store
-const pendingInterviews = computed(() => {
-  return 3 // Mock value
-})
 </script>

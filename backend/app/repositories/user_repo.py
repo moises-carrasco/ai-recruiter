@@ -46,7 +46,11 @@ class UserRepository:
             query = query.filter(User.email.contains(filters.email))
         if filters.is_active is not None:
             query = query.filter(User.is_active == filters.is_active)
-        return query.offset((filters.page - 1) * filters.per_page).limit(filters.per_page).all()
+        return query.order_by(User.first_name, User.last_name)\
+            .offset((filters.page - 1) * filters.per_page)\
+            .limit(filters.per_page).all()
 
     def search_by_name(self, db: Session, name: str, skip: int, limit: int):
-        return db.query(User).filter(User.first_name.contains(name) | User.last_name.contains(name)).offset(skip).limit(limit).all()
+        return db.query(User).filter(User.first_name.contains(name) | User.last_name.contains(name))\
+            .order_by(User.first_name, User.last_name)\
+            .offset(skip).limit(limit).all()

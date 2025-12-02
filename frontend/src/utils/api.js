@@ -100,10 +100,21 @@ api.interceptors.response.use(
   getInterviewStatuses: () => api.get('/lookup/statuses'),
 
   // Users
-  getUsers: () => api.get('/users'),
+  getUsers: (params) => api.get('/users', { params }),
   createUser: (data) => api.post('/users', data),
   updateUser: (id, data) => api.put(`/users/${id}`, data),
-  deleteUser: (id) => api.delete(`/users/${id}`)
+  deleteUser: (id) => api.delete(`/users/${id}`),
+
+  // Dashboard (no auth required)
+  getDashboardStatistics: () => {
+    return axios.create({
+      baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).get('/dashboard/statistics')
+  }
 }
 
 export default api

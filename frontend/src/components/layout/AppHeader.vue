@@ -12,7 +12,7 @@
       </button>
       
       <!-- App Logo/Title -->
-      <h1 class="text-xl font-bold text-white">Interview System</h1>
+      <h1 class="text-2xl font-bold" style="background: linear-gradient(to right, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Amauta AI</h1>
     </div>
     
     <!-- Right side - User Menu -->

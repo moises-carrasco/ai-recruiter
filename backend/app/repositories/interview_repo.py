@@ -116,6 +116,28 @@ class InterviewRepository(BaseRepository[Interview]):
 
         return query.scalar()
 
+    async def count_total_interviews(self, db: Session) -> int:
+        """Count total number of interviews."""
+        from sqlalchemy import func
+        return db.query(func.count(Interview.id)).scalar()
+
+    async def count_completed_interviews(self, db: Session) -> int:
+        """Count completed interviews."""
+        from sqlalchemy import func
+        # Get completed status ID
+        from ..models.lookup import LookupItem
+        completed_status = db.query(LookupItem).filter(
+            LookupItem.domain_id == 'interview_status',
+            LookupItem.item_id == 'completed'
+        ).first()
+
+        if not completed_status:
+            return 0
+
+        return db.query(func.count(Interview.id)).filter(
+            Interview.status_id == completed_status.id
+        ).scalar()
+
 
 class InterviewTranscriptRepository(BaseRepository[InterviewTranscript]):
     """Repository for interview transcript operations."""
