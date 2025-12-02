@@ -17,6 +17,7 @@ class UserUpdate(BaseModel):
     last_name: str | None = None
     email: EmailStr | None = None
     password: str | None = None
+    role: str | None = None
 
 class UserOut(BaseModel):
     id: int
