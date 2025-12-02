@@ -109,6 +109,9 @@ class InterviewService:
 
         print(f"DEBUG: Found interview: {interview.id} with link: {interview.interview_link}")
 
+        # Change status to 'In Progress' when link is accessed (if not already in progress or completed)
+        await self._update_status_to_in_progress_if_applicable(db, interview)
+
         # Note: Date/time validation removed as per user request
         # Validate link expiration (commented out)
         # if not validate_link_expiration(interview.scheduled_datetime):
@@ -469,7 +472,8 @@ class InterviewService:
 <========= end =========>
 
 This data is just internal information and it represents the parameter that you will be using to conduct the interview.
-Please remember to start the interview by saying hello to the candidate and introducing yourself"""
+Please remember to start the interview by saying hello to the candidate and introducing yourself.
+Also, remember that after greeting the candidate, you do not need to reintroduce yourself or confirm that you received the interview data in later messages, just continue with the interview questions."""
 
             # Log kickoff message for debugging
             self.logger.info(f"Kickoff message for interview {interview_id}: {kickoff_msg}")
@@ -642,6 +646,36 @@ Please remember to start the interview by saying hello to the candidate and intr
             return content
         except Exception as e:
             return f"Error reading file: {str(e)}"
+
+    async def _update_status_to_in_progress_if_applicable(self, db: Session, interview) -> None:
+        """Update interview status to 'In Progress' when accessed via link, if applicable."""
+        # Get current status
+        current_status = db.query(LookupItem).filter(LookupItem.id == interview.status_id).first()
+
+        if not current_status:
+            self.logger.warning(f"Interview {interview.id} has invalid status_id {interview.status_id}")
+            return
+
+        # Define statuses that should NOT be changed to 'In Progress'
+        final_statuses = ['in_progress', 'completed', 'cancelled', 'no_show']
+
+        if current_status.item_id in final_statuses:
+            self.logger.info(f"Interview {interview.id} status is already '{current_status.item_id}', not changing to 'in_progress'")
+            return
+
+        # Get 'In Progress' status
+        in_progress_status = db.query(LookupItem).filter(
+            LookupItem.domain_id == 'interview_status',
+            LookupItem.item_id == 'in_progress'
+        ).first()
+
+        if not in_progress_status:
+            self.logger.error("Could not find 'in_progress' status in lookup_items")
+            return
+
+        # Update the status
+        await self.interview_repo.update(db, interview, {'status_id': in_progress_status.id})
+        self.logger.info(f"Interview {interview.id} status changed from '{current_status.item_id}' to 'in_progress' when link was accessed")
 
     async def _get_interview_with_feedback(self, db: Session, interview_id: int) -> InterviewWithFeedbackOut:
         """Get interview with associated feedback and transcript."""

@@ -28,7 +28,7 @@
           <p class="text-base font-semibold text-gray-900">{{ interviewData.candidateName }}</p>
         </div>
         <div>
-          <label class="text-xs text-gray-500 uppercase tracking-wide block mb-1">Interviewer Name</label>
+          <label class="text-xs text-gray-500 uppercase tracking-wide block mb-1">Recruiting Analyst</label>
           <p class="text-base font-semibold text-gray-900">{{ interviewData.interviewerName }}</p>
         </div>
         <div>
