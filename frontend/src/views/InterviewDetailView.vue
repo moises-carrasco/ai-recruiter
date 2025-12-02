@@ -1,8 +1,23 @@
 <template>
   <div class="interview-detail-view">
+    <!-- Success Message Overlay -->
+    <div v-if="copySuccessMessage" class="fixed top-4 right-4 z-50">
+      <div class="px-4 py-2 bg-green-100 border border-green-200 text-green-800 rounded-md text-sm font-medium">
+        {{ copySuccessMessage }}
+      </div>
+    </div>
+
     <!-- Header -->
     <div class="mb-6">
-      <div class="flex items-center space-x-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">
+            Interview Details
+          </h1>
+          <p class="mt-2 text-sm text-gray-600">
+            View interview information and results
+          </p>
+        </div>
         <button
           @click="goBack"
           class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -12,14 +27,6 @@
           </svg>
           Back to Interviews
         </button>
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900">
-            Interview Details
-          </h1>
-          <p class="mt-2 text-sm text-gray-600">
-            View interview information and results
-          </p>
-        </div>
       </div>
     </div>
 
@@ -52,7 +59,7 @@
     </div>
 
     <!-- Interview Details -->
-    <div v-else-if="interview" class="space-y-6">
+    <div v-if="interview" class="space-y-6">
       <!-- Status Timeline -->
       <div class="bg-white shadow-md rounded-lg overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
@@ -175,6 +182,26 @@
             <div>
               <label class="block text-sm font-medium text-gray-700">Last Updated</label>
               <p class="mt-1 text-sm text-gray-900">{{ formatDateTime(interview.updated_at) }}</p>
+            </div>
+            <div v-if="interview.interview_link">
+              <label class="block text-sm font-medium text-gray-700">Interview Link</label>
+              <div class="mt-1 flex items-center space-x-2">
+                <input
+                  type="text"
+                  readonly
+                  :value="fullInterviewUrl"
+                  class="flex-1 px-3 py-1 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                  @click="copyInterviewLink"
+                  class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  title="Copy interview link"
+                >
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -389,9 +416,18 @@ const loading = ref(false)
 const loadingFeedback = ref(false)
 const loadingTranscript = ref(false)
 const error = ref(null)
+const copySuccessMessage = ref('')
 
 // Computed
 const interviewId = computed(() => route.params.id)
+
+const fullInterviewUrl = computed(() => {
+  if (!interview.value?.interview_link) return ''
+  // Extract just the hash part from database link (format: interview/hash)
+  const linkParts = interview.value.interview_link.split('/')
+  const hash = linkParts.length > 1 ? linkParts[1] : interview.value.interview_link
+  return `${window.location.origin}/interview/${hash}`
+})
 
 // Methods
 const loadInterview = async () => {
@@ -523,6 +559,28 @@ const downloadCV = async () => {
     console.error('Error downloading CV:', err)
     // Fallback: open in new tab
     window.open(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/interviews/${interview.value.id}/download-cv`, '_blank')
+  }
+}
+
+const copyInterviewLink = async () => {
+  if (!fullInterviewUrl.value) return
+
+  try {
+    await navigator.clipboard.writeText(fullInterviewUrl.value)
+    copySuccessMessage.value = 'Interview link copied to clipboard!'
+
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      copySuccessMessage.value = ''
+    }, 3000)
+  } catch (err) {
+    console.error('Error copying link:', err)
+    copySuccessMessage.value = 'Failed to copy link'
+
+    // Clear error message after 3 seconds
+    setTimeout(() => {
+      copySuccessMessage.value = ''
+    }, 3000)
   }
 }
 

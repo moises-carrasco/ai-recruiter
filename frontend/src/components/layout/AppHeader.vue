@@ -15,11 +15,11 @@
       <h1 class="text-2xl font-bold" style="background: linear-gradient(to right, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Amauta AI</h1>
     </div>
     
-    <!-- Right side - User Menu -->
-    <div class="flex items-center">
+    <!-- Right side - User Menu (Hidden for interview execution) -->
+    <div v-if="!isInterviewExecution" class="flex items-center">
       <!-- User Profile Dropdown -->
       <div class="relative">
-        <button 
+        <button
           @click="toggleUserMenu"
           class="p-2 text-white hover:bg-white hover:bg-opacity-10 rounded-full transition-colors duration-200 flex items-center space-x-2"
         >
@@ -31,9 +31,9 @@
             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
           </svg>
         </button>
-        
+
         <!-- User Dropdown Menu -->
-        <div 
+        <div
           v-if="userMenuOpen"
           class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
         >
@@ -44,7 +44,7 @@
             Preferences
           </a>
           <hr class="my-1">
-          <button 
+          <button
             @click="handleLogout"
             class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
@@ -58,14 +58,22 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 // Emits
 defineEmits(['toggle-sidebar'])
 
+// Router
+const route = useRoute()
+const router = useRouter()
+
+// Check if current route is interview execution (should hide user menu)
+const isInterviewExecution = computed(() => {
+  return route.name === 'interview-execution'
+})
+
 // User menu state
 const userMenuOpen = ref(false)
-const router = useRouter()
 
 // Mock user data - replace with actual auth store
 const currentUser = computed(() => {
