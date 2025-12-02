@@ -2,7 +2,23 @@
   <div class="interview-execution max-w-6xl mx-auto space-y-6">
     <!-- Top Section: Interview Metadata -->
     <div class="bg-white shadow-sm rounded-lg p-6">
-      <h2 class="text-2xl font-bold text-gray-900 mb-6">Interview Details</h2>
+      <!-- Header with Title and Timer -->
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Interview Details</h2>
+        <!-- Timer -->
+        <div v-if="!loading && !error" class="text-right">
+          <div class="text-xs text-gray-600">Time Remaining</div>
+          <div
+            class="text-xl font-mono font-bold"
+            :class="isTimeLow ? 'text-red-600' : 'text-gray-900'"
+          >
+            {{ formattedTime }}
+          </div>
+          <div v-if="isTimeLow" class="text-xs text-red-600">
+            ⏰ Low!
+          </div>
+        </div>
+      </div>
 
       <!-- Loading State -->
       <div v-if="loading" class="flex justify-center items-center py-8">
@@ -124,7 +140,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { apiClient } from '@/utils/api.js'
 
@@ -153,6 +169,41 @@ const messagesContainer = ref(null)
 
 const newMessage = ref('')
 const isAiResponding = ref(false) // Track if AI is currently responding
+
+// Timer state
+const timeRemaining = ref(30 * 60) // 30 minutes in seconds
+const timerInterval = ref(null)
+
+// Timer computed properties
+const formattedTime = computed(() => {
+  const minutes = Math.floor(timeRemaining.value / 60)
+  const seconds = timeRemaining.value % 60
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+})
+
+const isTimeLow = computed(() => timeRemaining.value <= 5 * 60) // Less than 5 minutes
+
+// Timer functions
+const startTimer = () => {
+  if (timerInterval.value) {
+    clearInterval(timerInterval.value)
+  }
+
+  timerInterval.value = setInterval(() => {
+    if (timeRemaining.value > 0) {
+      timeRemaining.value--
+    } else {
+      stopTimer()
+    }
+  }, 1000)
+}
+
+const stopTimer = () => {
+  if (timerInterval.value) {
+    clearInterval(timerInterval.value)
+    timerInterval.value = null
+  }
+}
 
 // Auto-scroll to bottom of messages
 const scrollToBottom = async () => {
@@ -187,6 +238,9 @@ const loadInterviewData = async () => {
 
     // Start interview chat (send start_interview message)
     await startInterviewChat()
+
+    // Start the countdown timer
+    startTimer()
 
     // Scroll to bottom after loading all messages
     await scrollToBottom()
@@ -225,6 +279,11 @@ const startInterviewChat = async () => {
 // Load data when component mounts
 onMounted(() => {
   loadInterviewData()
+})
+
+// Clean up timer when component unmounts
+onUnmounted(() => {
+  stopTimer()
 })
 
 const sendMessage = async () => {
