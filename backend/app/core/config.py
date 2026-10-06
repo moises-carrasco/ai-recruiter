@@ -9,7 +9,8 @@ try:
 except ImportError:
     from pydantic import BaseSettings
 
-ENV_PATH = Path(__file__).resolve().parents[2] 
+ENV_PATH = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 class Settings(BaseSettings):
     """Application settings."""
@@ -19,7 +20,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     
     # Database
-    DATABASE_URL: str = "sqlite:///./interview_system.db"
+    DATABASE_URL: str = f"sqlite:///{PROJECT_ROOT / 'interview_system.db'}"
     
     # Security
     SECRET_KEY: str = "your-secret-key-change-in-production"

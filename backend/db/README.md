@@ -106,7 +106,7 @@ The `lookup_items` table uses a generic structure for all lookup data:
 ### Domains
 - **`roles`**: Technical roles (data_engineer, python_developer, etc.)
 - **`seniorities`**: Experience levels (junior, senior, lead, etc.)
-- **`clients`**: Globant clients (northwind_media, globex_studios, etc.)
+- **`clients`**: Client accounts (northwind_media, globex_studios, etc.)
 - **`interview_status`**: Interview states (registered, completed, etc.)
 
 ### Adding New Lookup Items

@@ -100,7 +100,7 @@ This payload will be send to an AI assistant. The expected format is like this
 - We need an AI service layer that can send the payload created by the function `format_messages_payload_ai` to an AI assistant.
 - The parameters for sending the message are:
     - Method: `POST`
-    - URL: `https://api.openai.com/v1/chat/completions`
+    - URL: the assistant endpoint configured in `AI_API_URL`
     - Header: `Authorization: Bearer <AI_API_KEY>`
     - Header: `Content-Type: application/json`
 - This request must be sent **synchronously**.

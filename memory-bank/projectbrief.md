@@ -1,7 +1,7 @@
 # Project Brief: AI Technical Interview System
 
 ## Project Overview
-**Goal:** Develop an MVP web application that enables an AI agent to conduct technical interviews with Globant workers (Globers) applying for specific positions within client accounts (Northwind Media, Globex Studios, etc.).
+**Goal:** Develop an MVP web application that enables an AI agent to conduct technical interviews with Globant workers (Globers) applying for specific positions within the client accounts the company manages.
 
 ## Core Value Proposition
 - **Automated Technical Screening:** Replace manual initial technical interviews with AI-driven conversations

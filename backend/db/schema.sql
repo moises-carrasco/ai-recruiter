@@ -196,10 +196,10 @@ INSERT OR IGNORE INTO lookup_items (domain_id, item_id, text_value, sort_order, 
 INSERT OR IGNORE INTO lookup_items (domain_id, item_id, text_value, sort_order, created_at, updated_at) VALUES
 ('clients', 'northwind_media', 'Northwind Media', 1, datetime('now'), datetime('now')),
 ('clients', 'globex_studios', 'Globex Studios', 2, datetime('now'), datetime('now')),
-('clients', 'netflix', 'Netflix', 3, datetime('now'), datetime('now')),
-('clients', 'amazon', 'Amazon', 4, datetime('now'), datetime('now')),
-('clients', 'microsoft', 'Microsoft', 5, datetime('now'), datetime('now')),
-('clients', 'google', 'Google', 6, datetime('now'), datetime('now'));
+('clients', 'vertex_streaming', 'Vertex Streaming', 3, datetime('now'), datetime('now')),
+('clients', 'helios_commerce', 'Helios Commerce', 4, datetime('now'), datetime('now')),
+('clients', 'orion_software', 'Orion Software', 5, datetime('now'), datetime('now')),
+('clients', 'lumen_analytics', 'Lumen Analytics', 6, datetime('now'), datetime('now'));
 
 -- Predefined Lookup Items for Interview Status
 INSERT OR IGNORE INTO lookup_items (domain_id, item_id, text_value, sort_order, created_at, updated_at) VALUES

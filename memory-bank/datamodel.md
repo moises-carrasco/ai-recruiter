@@ -95,7 +95,7 @@ Interviews (1) ----< InterviewTranscripts (1)
 
 **Predefined Domains:**
 - **roles:** Technical roles (e.g., 'data_engineer', 'python_developer')
-- **clients:** Globant clients (e.g., 'northwind_media', 'globex_studios')
+- **clients:** Client accounts (e.g., 'northwind_media', 'globex_studios')
 - **seniorities:** Experience levels (e.g., 'junior', 'senior', 'lead')
 - **interview_status:** Interview states (e.g., 'registered', 'executed', 'not_executed')
 

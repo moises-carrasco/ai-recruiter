@@ -1,6 +1,6 @@
 # **Project Definition**
 
-The goal of this project is to develop an MVP for a web application that enables an AI agent to conduct technical interviews with Globant workers (Globers) who wish to apply for a specific position within the accounts Globant manages for its clients (Northwind Media, Globex Studios, etc.).
+The goal of this project is to develop an MVP for a web application that enables an AI agent to conduct technical interviews with Globant workers (Globers) who wish to apply for a specific position within the client accounts the company manages.
 
 The system must allow each interview to be configured by associating a candidate with a Job Description, which defines the technical and experience requirements for the position. Based on this information, the AI will conduct a verbal interview in a dynamic conversational format with the candidate.
 

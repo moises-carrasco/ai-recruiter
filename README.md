@@ -1,496 +1,224 @@
-# AI Technical Interview System - Globant
+# AI Technical Interview System
 
-An AI-powered web application that conducts technical interviews with Globant workers (Globers) applying for specific positions within client accounts. The system replaces manual initial technical screenings with automated, objective AI-driven conversations focused on quantifiable technical competencies.
+An AI agent that conducts technical screening interviews, reads the candidate's CV against the job description, holds a real conversation, and returns a structured 1–5 skill assessment.
 
-## 🎯 Project Overview
+> **🏆 First place — Globant internal hackathon, 2025.**
+> Built end to end in four days (Nov 29 – Dec 2, 2025) using a specification-driven AI workflow. The commit history reflects that timeline.
 
-### Core Value Proposition
-- **Automated Technical Screening**: Replace manual interviews with AI-conducted conversations
-- **Objective Assessment**: Focus exclusively on measurable technical attributes
-- **Standardized Process**: Ensure consistent evaluation criteria across all interviews
-- **Scalable Solution**: Handle multiple interviews simultaneously without resource constraints
+---
 
-### Key Features
-- 🤖 **AI-Driven Interviews**: Conversational technical assessments based on Job Descriptions and CVs
-- 📊 **Structured Feedback**: 1-5 ranking system with detailed skill evaluations
-- 👥 **Role-Based Access**: Admin, Recruiting Analyst, and Candidate user roles
-- 📁 **File Management**: Upload and storage of CVs and Job Descriptions
-- 🔗 **Secure Links**: Time-sensitive interview links for candidate access
-- 📋 **CRUD Operations**: Complete management of candidates, interviews, and users
-- 🎯 **Objective Evaluation**: Focus on quantifiable technical skills only
+## What it does
 
-## 📁 Documentation
+Initial technical screenings are expensive, inconsistent, and don't scale: every interviewer asks different questions and grades on a different curve. This system replaces that first pass with an AI interviewer that works from two inputs — the candidate's CV and the job description — and produces a comparable, evidence-backed evaluation for every candidate.
 
-The project includes comprehensive documentation in the `docs/` folder:
+A recruiting analyst creates the interview, uploads the CV and JD, and shares a single-use link. The candidate opens the link and talks to the AI interviewer directly in the browser, with no account and no system navigation. When the conversation ends, the analyst gets the full transcript plus a structured ranking per technical skill.
 
-- **📋 Backlog & User Stories**: Complete user stories and requirements (`docs/backlog - user_stories.md`)
-- **📝 Project Definition**: Detailed project scope and objectives (`docs/project definition.md`)
-- **🎨 Design Mockups**: UI/UX design references and wireframes (`docs/mockups/`)
-- **📄 Sample Documents**: Example CVs and job descriptions for testing (`docs/candidate_cv_jd_samples/`)
+The scoring deliberately covers only quantifiable technical competencies. Cultural fit and soft skills stay with the human interviewer in later rounds.
 
-These resources provide guidance for development, testing, and understanding the project requirements.
+## Screenshots
 
-## 🏗️ Architecture & Technology Stack
+<!-- TODO: replace the design references below with real screenshots of the running app.
+     Suggested captures: interview execution (candidate chat + timer), interview detail
+     with generated feedback, and the interviews listing. -->
 
-### Backend Architecture
+**Candidate interview interface**
+
+![Candidate interview interface](docs/mockups/candidate-interview-interface.png)
+
+**Analyst view of interview results**
+
+![Analyst results view](docs/mockups/analyst-results-view.png)
+
+**Listings and management**
+
+![Listing view](docs/mockups/general%20listing%20example.jpg)
+
+> These are the design references the implementation was built against. Screenshots of the running application are pending.
+
+## Technical highlights
+
+**Specification-driven development.** The project was not prompted into existence file by file. Before any code, the system was specified in a `memory-bank/` (data model, system patterns, chat logic, requirements, UI reference) and a set of `.clinerules/` that constrain layering, naming, and data access conventions. Those specs drove the implementation and are committed in the repository — the interesting artifact here is as much the method as the result.
+
+**Strict layered backend.** Routes never touch the database. Every request goes API → Service → Repository → Database, with Pydantic schemas at the boundary and SQLAlchemy models underneath. The separation held up through four days of rapid change, which is the actual test of it.
+
+**Single-use candidate links.** Candidates never get an account. Access is granted through a generated interview link that resolves to one interview and exposes only the chat and transcript endpoints for it, so the candidate-facing surface is a strict subset of the API.
+
+**Conversation state and assessment.** The AI receives the CV, the JD, and the role and seniority context at kickoff, then conducts a multi-turn interview with the full transcript persisted turn by turn. On completion it produces structured feedback with a 1–5 ranking per skill, stored alongside the transcript rather than regenerated on read.
+
+**Graceful degradation on AI latency.** The assistant endpoint can take tens of seconds. Timeouts, typing indicators, and retry handling were built in because a hung chat is the one failure a live interview cannot absorb.
+
+## Features
+
+- **AI-conducted interviews** driven by the candidate's CV and the job description
+- **Structured feedback** with a 1–5 ranking per technical skill, plus the full transcript
+- **Role-based access** for administrators, recruiting analysts, and candidates
+- **Single-use interview links** for candidate access without accounts
+- **CV and JD upload/download** (`.txt` and `.md`, 10 MB cap, validated server-side)
+- **Timed interview execution** with a live chat interface
+- **Full CRUD** for users, candidates, and interviews, plus lookup table management
+- **Dashboard and analytics** views over interview activity
+- **JWT authentication** with bcrypt password hashing
+
+## Architecture
+
 ```
-API Layer (FastAPI Routes)
-    ↓
-Service Layer (Business Logic)
-    ↓
-Repository Layer (Data Access)
-    ↓
-Database Layer (SQLite)
-```
-
-**Technology Stack:**
-- **Framework**: FastAPI (Python async web framework)
-- **ORM**: SQLAlchemy 2.0 with async support
-- **Database**: SQLite (with PostgreSQL migration path)
-- **Validation**: Pydantic v2
-- **Authentication**: JWT tokens with bcrypt password hashing
-- **AI Integration**: External AI service (OpenAI API compatible)
-- **HTTP Client**: httpx for async AI API calls
-- **File Handling**: aiofiles for async file operations
-
-### Frontend Architecture
-```
-Views (Page Components)
-    ↓
-Components (Reusable UI)
-    ↓
-Store (Pinia State Management)
-    ↓
-Services/API (HTTP Communication)
-```
-
-**Technology Stack:**
-- **Framework**: Vue 3 with Composition API
-- **Build Tool**: Vite
-- **Routing**: Vue Router 4
-- **State Management**: Pinia (Vue 3 store)
-- **Styling**: Tailwind CSS
-- **HTTP Client**: Axios with custom timeout configuration
-- **Development**: ESLint, Prettier
-
-### Database Schema
-**Core Entities:**
-- **Users**: Admin, Recruiting Analysts with role-based permissions
-- **Candidates**: Globant workers applying for positions
-- **Interviews**: Scheduled technical assessments with AI
-- **Interview Transcripts**: Complete conversation logs
-- **Interview Feedback**: Structured evaluation results
-- **Lookup Tables**: Roles, Seniorities, Clients, Statuses
-
-**Key Relationships:**
-- Users create Interviews
-- Candidates participate in Interviews
-- Interviews have associated Transcripts and Feedback
-- Interviews link to Roles, Seniorities, and Clients
-
-## 🚀 Quick Start
-
-### Prerequisites
-- **Python**: 3.10
-- **Node.js**: 18.0 or higher
-- **SQLite**: 3.x (usually pre-installed)
-- **Git**: For version control
-
-### Backend Setup
-
-1. **Clone and navigate to backend:**
-   ```bash
-   cd backend
-   ```
-
-2. **Create virtual environment:**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Environment configuration:**
-   Create a `.env` file in the `backend/` directory:
-   ```bash
-   # Database
-   DATABASE_URL=sqlite:///./interview_system.db
-
-   # Security
-   SECRET_KEY=your-super-secret-key-here-change-in-production
-   ALGORITHM=HS256
-   ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-   # AI Service Configuration
-   # IMPORTANT: Place your AI assistant URL and token here
-   AI_API_URL=https://api.openai.com/v1/chat/completions
-   AI_AUTH_TOKEN=your-ai-auth-token-here
-
-   # File Upload Configuration
-   MAX_UPLOAD_SIZE=10485760  # 10MB in bytes
-   ALLOWED_EXTENSIONS=txt,md
-   ```
-
-5. **Database initialization:**
-   
-   **Option A: Using Python initialization script (Recommended):**
-   ```bash
-   python -m app.db.init_db
-   ```
-   
-   **Option B: Manual database creation using SQLite3:**
-   ```bash
-   # Navigate to project root directory
-   cd ..
-   
-   # Create database using schema.sql
-   sqlite3 interview_system.db < backend/db/schema.sql
-   
-   # Verify database creation
-   sqlite3 interview_system.db ".tables"
-   ```
-   
-   **Database Configuration:**
-   - The database file path is configured in the `backend/app/core/config.py` file with the `DATABASE_URL` variable
-   - Default location: `./interview_system.db` (project root directory)
-   - The schema file is located at: `backend/db/schema.sql`
-
-6. **Run backend server:**
-   ```bash
-   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-   ```
-
-### Frontend Setup
-
-1. **Navigate to frontend directory:**
-   ```bash
-   cd frontend
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Environment configuration:**
-   Create a `.env` file in the frontend directory:
-   ```bash
-   VITE_API_BASE_URL=http://localhost:8000/api/v1
-   ```
-
-4. **Run development server:**
-   ```bash
-   npm run dev
-   ```
-
-### Access the Application
-
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **API Documentation**: http://localhost:8000/docs (Swagger UI)
-
-## 📋 Dependencies
-
-### Backend Dependencies (requirements.txt)
-```txt
-# Web Framework
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-
-# Database & ORM
-sqlalchemy==2.0.23
-alembic==1.12.1
-
-# Authentication & Security
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.6
-
-# Data Validation
-pydantic==2.5.0
-pydantic-settings==2.1.0
-
-# AI Integration
-openai==1.3.7
-httpx==0.25.2
-
-# Development & Testing
-pytest==7.4.3
-pytest-asyncio==0.21.1
-black==23.11.0
-flake8==6.1.0
-
-# Environment & Utils
-python-dotenv==1.0.0
-aiofiles==23.2.1
+Backend                          Frontend
+─────────────────────────        ─────────────────────────
+API Layer (FastAPI routes)       Views (pages)
+        ↓                                ↓
+Service Layer (business logic)   Components (reusable UI)
+        ↓                                ↓
+Repository Layer (data access)   Store (Pinia)
+        ↓                                ↓
+Database (SQLite)                Services / API (Axios)
 ```
 
-### Frontend Dependencies (package.json)
-```json
-{
-  "dependencies": {
-    "vue": "^3.3.8",
-    "vue-router": "^4.2.5",
-    "pinia": "^2.1.7",
-    "axios": "^1.6.2"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-vue": "^4.5.0",
-    "vite": "^5.0.0",
-    "tailwindcss": "^3.3.6",
-    "autoprefixer": "^10.4.16",
-    "postcss": "^8.4.32",
-    "eslint": "^8.54.0",
-    "eslint-plugin-vue": "^9.18.1",
-    "prettier": "^3.1.0",
-    "@vue/eslint-config-prettier": "^8.0.0"
-  }
-}
-```
+**Backend:** FastAPI · SQLAlchemy 2.0 · Pydantic v2 · SQLite · JWT (python-jose) · bcrypt (passlib) · httpx · aiofiles · pytest
 
-## 📁 Project Structure
+**Frontend:** Vue 3 (Composition API) · Vite · Vue Router 4 · Pinia · Tailwind CSS · Axios
 
-### Backend Structure
-```
-backend/
-├── app/
-│   ├── api/v1/routes/          # API endpoint definitions
-│   │   ├── auth.py            # Authentication endpoints
-│   │   ├── users.py           # User management
-│   │   ├── candidates.py      # Candidate CRUD
-│   │   ├── interviews.py      # Interview management & chat
-│   │   └── lookup.py          # Lookup table management
-│   ├── core/                  # Core configuration
-│   │   ├── config.py          # Environment & app config
-│   │   ├── security.py        # JWT & password utilities
-│   │   └── logging_config.py  # Logging setup
-│   ├── models/                # SQLAlchemy models
-│   │   ├── base.py            # Base model class
-│   │   ├── user.py            # User model
-│   │   ├── candidate.py       # Candidate model
-│   │   ├── interview.py       # Interview model
-│   │   └── lookup.py          # Lookup table models
-│   ├── schemas/               # Pydantic schemas
-│   │   ├── auth.py            # Authentication schemas
-│   │   ├── user.py            # User validation
-│   │   ├── candidate.py       # Candidate validation
-│   │   ├── interview.py       # Interview validation
-│   │   └── lookup.py          # Lookup validation
-│   ├── services/              # Business logic layer
-│   │   ├── auth_service.py    # Authentication logic
-│   │   ├── user_service.py    # User operations
-│   │   ├── candidate_service.py # Candidate operations
-│   │   ├── interview_service.py # Interview & chat logic
-│   │   ├── lookup_service.py  # Lookup operations
-│   │   └── ai_agent_service.py # AI integration
-│   ├── repositories/          # Data access layer
-│   │   ├── base.py            # Base repository
-│   │   ├── user_repo.py       # User data access
-│   │   ├── candidate_repo.py  # Candidate data access
-│   │   ├── interview_repo.py  # Interview data access
-│   │   └── lookup_repo.py     # Lookup data access
-│   ├── utils/                 # Utility functions
-│   │   ├── file_handler.py    # File upload utilities
-│   │   └── link_generator.py  # Interview link generation
-│   ├── db/                    # Database utilities
-│   │   ├── session.py         # Database session management
-│   │   └── init_db.py         # Database initialization
-│   └── main.py                # FastAPI application entry point
-├── requirements.txt           # Python dependencies
-├── test_ai.py                # AI service testing script
-└── README.md                 # Backend documentation
-```
+**AI:** OpenAI-compatible assistant endpoint. The pilot ran against Globant Enterprise AI with a specialized interviewer model.
 
-### Frontend Structure
-```
-frontend/
-├── src/
-│   ├── components/            # Reusable Vue components
-│   │   ├── common/           # Shared components (NavigationBar, LoadingSpinner, etc.)
-│   │   ├── forms/            # Form components (CandidateForm, InterviewForm, etc.)
-│   │   ├── layout/           # Layout components (AppHeader, AppSidebar, etc.)
-│   │   └── lists/            # List components (CandidateList, InterviewList, etc.)
-│   ├── views/                # Page-level components
-│   │   ├── HomeView.vue      # Dashboard/home page
-│   │   ├── CandidatesView.vue # Candidate management
-│   │   ├── InterviewsView.vue # Interview management
-│   │   ├── InterviewExecutionView.vue # Live interview interface
-│   │   ├── LoginView.vue     # Authentication
-│   │   └── SettingsView.vue  # System settings
-│   ├── router/               # Vue Router configuration
-│   │   └── index.js          # Route definitions
-│   ├── store/                # Pinia state management
-│   │   ├── auth.js           # Authentication state
-│   │   ├── candidates.js     # Candidate state
-│   │   ├── interviews.js     # Interview state
-│   │   └── lookup.js         # Lookup data state
-│   ├── utils/                # Utility functions
-│   │   ├── api.js            # API client configuration
-│   │   └── validation.js     # Form validation utilities
-│   ├── composables/          # Vue composables (reusable logic)
-│   ├── App.vue               # Root Vue component
-│   └── main.js               # Vue application entry point
-├── public/                   # Static assets
-├── index.html                # HTML template
-├── package.json              # Node.js dependencies and scripts
-├── vite.config.js           # Vite build configuration
-├── tailwind.config.js       # Tailwind CSS configuration
-└── postcss.config.js        # PostCSS configuration
-```
+### Data model
 
-## 🔐 User Roles & Permissions
+Core entities are users, candidates, interviews, interview transcripts, and interview feedback, with lookup tables for roles, seniorities, clients, and statuses. Users create interviews; candidates participate in them; each interview carries one transcript and one feedback record. The full DDL lives in `backend/db/schema.sql`.
 
-### 1. System Administrator
-- **Full Access**: Complete system administration
-- **User Management**: Create, update, deactivate users
-- **System Configuration**: Manage lookup tables and settings
-- **Audit Access**: View all system activities
+## Quick start
 
-### 2. Recruiting Analyst
-- **Interview Management**: Create and manage interviews
-- **Candidate Access**: View and manage assigned candidates
-- **Feedback Review**: Access interview results and feedback
-- **Reporting**: Generate recruitment reports
+**Prerequisites:** Python 3.10, Node.js 18+, SQLite 3.x
 
-### 3. Candidate (Glober)
-- **Interview Access**: Participate in assigned interviews via secure links
-- **Limited Access**: No system navigation, direct interview interface only
-- **Response Only**: Can only respond to AI interviewer questions
+### Backend
 
-## 🤖 AI Integration
-
-### Interview Flow
-1. **Kickoff**: AI receives candidate CV, Job Description, and role context
-2. **Conversation**: AI conducts structured technical interview
-3. **Assessment**: AI evaluates responses based on technical competencies
-4. **Feedback**: System generates structured feedback with 1-5 rankings
-
-### AI Service Configuration
-- **Provider**: Globant Enterprise AI (compatible with OpenAI API)
-- **Model**: Interviewer_Expert specialized model
-- **Timeout**: 60 seconds for responses (with fallback handling)
-- **Error Handling**: Graceful degradation with user-friendly messages
-
-### Chat Features
-- **Real-time Conversation**: Instant messaging interface
-- **Typing Indicators**: Visual feedback during AI processing
-- **Message History**: Complete conversation logging
-- **Error Recovery**: Automatic retry mechanisms for failed responses
-
-## 📊 Current Project Status
-
-**Phase**: MVP Development (Backend + AI Integration Complete)
-**Progress**: ~75% Complete
-**Status**: Functional MVP with core features implemented
-
-### ✅ Completed Features
-- **Backend API**: Complete FastAPI implementation with all endpoints
-- **Database**: SQLite schema with all entities and relationships
-- **Authentication**: JWT-based auth with role-based permissions
-- **AI Integration**: Working chat system with external AI service
-- **File Upload**: CV and Job Description upload functionality
-- **User Management**: CRUD operations for all user roles
-- **Frontend Foundation**: Vue 3 setup with core components
-
-### 🚧 In Progress
-- **Interview Workflow**: Complete interview lifecycle management
-- **AI Response Handling**: Improved error handling for slow responses
-- **UI Polish**: Enhanced user interface and experience
-
-### 📋 Planned Features
-- **Advanced Reporting**: Analytics and recruitment insights
-- **Bulk Operations**: Mass candidate and interview management
-- **Integration APIs**: Calendar and HR system integrations
-- **Mobile Optimization**: Responsive design improvements
-
-## 🧪 Testing
-
-### Backend Testing
 ```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=app --cov-report=html
-
-# Test AI service specifically
-python test_ai.py
+cd backend
+python -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-### Frontend Testing
+Create `backend/.env`:
+
 ```bash
-# Lint code
-npm run lint
+DATABASE_URL=sqlite:///./interview_system.db
 
-# Format code
-npm run format
+SECRET_KEY=change-me
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-# Build for production
-npm run build
+# Any OpenAI-compatible assistant endpoint
+AI_API_URL=https://api.openai.com/v1
+AI_API_KEY=your-key-here
+
+MAX_UPLOAD_SIZE=10485760
+ALLOWED_EXTENSIONS=txt,md
 ```
 
-## 🚀 Deployment
+Initialize the database and run:
 
-### Production Considerations
-- **Database**: Migrate from SQLite to PostgreSQL for scalability
-- **File Storage**: Implement cloud storage (AWS S3/Azure Blob)
-- **Environment Variables**: Secure secret management
-- **Load Balancing**: Multiple backend instances behind load balancer
-- **Monitoring**: Application performance monitoring and alerting
-
-### Docker Deployment (Future)
-```dockerfile
-# Backend
-FROM python:3.11-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY . .
-EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
-
-# Frontend
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json .
-RUN npm install
-COPY . .
-RUN npm run build
-EXPOSE 80
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "80"]
+```bash
+python -m app.db.init_db        # or: sqlite3 ../interview_system.db < db/schema.sql
+uvicorn app.main:app --reload --port 8000
 ```
 
-## 🤝 Contributing
+### Frontend
 
-### Development Guidelines
-1. **Code Style**: Follow PEP 8 (backend) and Vue.js style guide (frontend)
-2. **Testing**: Write tests for new features and bug fixes
-3. **Documentation**: Update README and docstrings for API changes
-4. **Commits**: Use conventional commit messages
-5. **Memory Bank**: Update memory-bank files for architectural decisions
+```bash
+cd frontend
+npm install
+echo "VITE_API_BASE_URL=http://localhost:8000/api/v1" > .env
+npm run dev
+```
 
-### Code Quality Tools
-- **Backend**: Black (formatting), Flake8 (linting), mypy (type checking)
-- **Frontend**: ESLint (linting), Prettier (formatting)
+Frontend at `http://localhost:3000`, API at `http://localhost:8000`, interactive API docs at `http://localhost:8000/docs`.
 
-## 📄 License
+### Tests
 
-This project is proprietary software developed for Globant. All rights reserved.
+```bash
+cd backend && pytest        # service and API tests
+cd frontend && npm run lint
+```
 
-## 📞 Support
+## Project structure
 
-For technical support or questions about the system:
-- **Backend Issues**: Check FastAPI logs and database connections
-- **Frontend Issues**: Check browser console and network requests
-- **AI Issues**: Verify AI service configuration and API keys
-- **Deployment Issues**: Review environment variables and dependencies
+```
+.
+├── backend/
+│   ├── app/
+│   │   ├── api/v1/routes/   # auth, users, candidates, interviews, lookup, dashboard
+│   │   ├── services/        # business logic, incl. ai_agent_service
+│   │   ├── repositories/    # data access
+│   │   ├── models/          # SQLAlchemy models
+│   │   ├── schemas/         # Pydantic schemas
+│   │   ├── core/            # config, security, logging
+│   │   ├── utils/           # file handling, interview link generation
+│   │   ├── db/              # session, initialization
+│   │   └── tests/
+│   └── db/schema.sql        # full DDL and seed data
+├── frontend/
+│   └── src/
+│       ├── views/           # interviews, execution, candidates, users, analytics, settings
+│       ├── components/      # common, forms, layout, lists
+│       ├── store/           # Pinia stores
+│       └── utils/           # API client, validation
+├── memory-bank/             # system specifications that drove development
+├── .clinerules/             # architectural constraints for AI-assisted development
+└── docs/                    # project definition, user stories, mockups, sample CVs/JDs
+```
 
-## 🔄 Version History
+## Scope and status
 
-- **v0.1.0**: Initial MVP with core interview functionality
-- **v0.0.1**: Backend foundation and AI integration
-- **v0.0.0**: Project initialization and memory bank setup
+This is the hackathon pilot, preserved as it was delivered. It is a working end-to-end system — interviews run, the AI conducts them, feedback is generated and stored — built under a four-day constraint, with the trade-offs that implies.
+
+Known limitations, kept deliberately rather than hidden: SQLite instead of PostgreSQL, local filesystem instead of object storage, test coverage concentrated on the service layer, and no containerization. Reporting, bulk operations, HR system integrations, and mobile layouts were out of scope.
+
+## Roadmap
+
+### Next step: giving the interviewer a voice
+
+The pilot interviews through text. The next step is to let the interviewer speak its questions and let the candidate answer out loud, with text kept as a fallback. A spoken interview feels closer to a real screening, removes the sense of filling in a form, and makes it possible to observe how a candidate explains something under light pressure — which is a genuine part of a technical screen, not a cosmetic one.
+
+It fits the current design without disturbing it. The conversation loop stays exactly as it is; audio becomes a layer at the edges. The question text the backend already produces gets synthesized before it reaches the browser, and the candidate's speech gets transcribed before it enters the loop. The transcript remains the single source of truth, so the existing feedback and 1–5 scoring pipeline needs no change at all. Text input stays available for poor connections and for accessibility.
+
+**Speech synthesis — the interviewer's voice**
+
+- **ElevenLabs** — the most natural output available, with a streaming API, which matters because latency is what breaks the illusion
+- **OpenAI TTS** (`gpt-4o-mini-tts`) — least friction, since the backend already speaks to an OpenAI-compatible endpoint
+- **Amazon Polly** or **Google Cloud Text-to-Speech** — lowest cost per character with neural voices, the natural choice if the rest of the stack moves to that cloud
+- **Piper** or **Coqui TTS** — self-hosted, no per-request cost, worth considering if candidate audio must not leave the network
+
+**Speech recognition — the candidate's answers**
+
+- **Deepgram Nova** — streaming with very low latency, built for conversational audio
+- **OpenAI** `gpt-4o-transcribe` or `whisper-1` — accurate and trivial to integrate, but not streaming
+- **faster-whisper** — Whisper on CTranslate2, self-hosted, close to real time on a GPU
+- **Amazon Transcribe** or **Azure AI Speech** — managed alternatives with speaker diarization
+
+**End-to-end speech, which would replace the two-step chain**
+
+- **OpenAI Realtime API** — speech in, speech out over WebRTC; the lowest-latency option and it handles interruptions natively
+- **Pipecat** or **LiveKit Agents** — frameworks that orchestrate the voice loop: turn detection, barge-in, audio transport
+- **Silero VAD** — voice activity detection, needed to tell when the candidate has stopped speaking
+- Browser side: the **Web Audio API** and `MediaRecorder` for capture, over a FastAPI **WebSocket** endpoint for bidirectional streaming
+
+The hard parts are worth naming, because they are not the transcription. Turn-taking is the real problem: distinguishing a candidate who is thinking from one who has finished answering. Latency is the second: the pilot tolerates assistant responses measured in tens of seconds, which is invisible in a chat window and unacceptable in speech, so voice forces streaming end to end. Interruptions require playback and generation to be cancellable mid-sentence. And fairness matters — accent and microphone quality must not leak into the technical score, which is an argument for scoring from the transcript rather than the audio, and for validating that this holds.
+
+### Running this in the cloud
+
+The pilot runs on a single machine: one SQLite file, a local uploads directory, one uvicorn process. The draft below is what a production deployment would look like. It is deliberately cloud-agnostic — every box has a managed equivalent in AWS, GCP, and Azure.
+
+![Proposed cloud architecture](docs/diagrams/cloud-architecture.png)
+
+Beyond hosting, four changes carry real weight. PostgreSQL replaces the SQLite file so more than one API instance can serve traffic at once. Object storage replaces the uploads directory so the containers stay stateless and can be killed freely. A queue moves feedback generation off the request path, because a slow assistant call should not hold an HTTP connection open. And the WebSocket gateway is what carries interview audio once the voice work above lands.
+
+## Documentation
+
+The specifications that drove development are committed and readable:
+
+- `memory-bank/` — project brief, data model, system patterns, chat logic, requirements, UI reference
+- `.clinerules/` — layering, naming, and data access constraints
+- `docs/project definition.md` and `docs/backlog - user_stories.md` — scope and user stories
+- `docs/mockups/` — UI/UX design references
+- `docs/candidate_cv_jd_samples/` — sample CVs and job descriptions for testing
+
+## About this repository
+
+This is a personal portfolio copy of a prototype originally built for an internal Globant hackathon, published to document the work and the approach. It is not affiliated with, endorsed by, or maintained on behalf of Globant, and no license for reuse or redistribution is granted.

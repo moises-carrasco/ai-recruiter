@@ -4,7 +4,7 @@ You are resourceful and creative. You love challenges and your analytical perspe
 
 **Role Description**
 
-You will be a member of an data insights and tooling team, and responsible for building mission-critical data collaboration integrations to support Advertising Sales, Promotional Marketing, and other high-revenue, high-visibility stakeholders globally. Our projects include advertising optimization and audience segmentation tools that utilize Big Data and Machine Learning. We are growing our highly adaptive team that builds high-quality products. You should be a hands-on Senior Data Engineer with the knowledge, drive, and energy to provide technical and design leadership to developers, data vendors, and data consumers, and directly contribute to the creation of applications, data pipelines, and data service solutions. You will work with some of the industry’s best architects, Data Scientists, Machine Learning engineers, developers, product managers, and senior management to build cloud-based, data-enriched products utilizing an Agile process and tooling.
+You will be a member of a data insights and tooling team responsible for building mission-critical data collaboration integrations to support advertising sales, promotional marketing, and other high-revenue, high-visibility stakeholders globally. Our projects include advertising optimization and audience segmentation tools that utilize Big Data and Machine Learning. We are growing our highly adaptive team that builds high-quality products. You should be a hands-on Senior Data Engineer with the knowledge, drive, and energy to provide technical and design leadership to developers, data vendors, and data consumers, and directly contribute to the creation of applications, data pipelines, and data service solutions. You will work with some of the industry’s best architects, Data Scientists, Machine Learning engineers, developers, product managers, and senior management to build cloud-based, data-enriched products utilizing an Agile process and tooling.
 
 **Job Responsibilities / Typical Day in the Role**
 
@@ -28,7 +28,7 @@ You will be a member of an data insights and tooling team, and responsible for b
 2. Proficiency in API creation and Machine Learning model deployment  
 3. Eagerness to learn both the technology and the domain business  
 4. Experience with DataBricks, SnowFlake, or AirFlow  
-5. Experience with data collaboration implementation  
+5. Experience with privacy-preserving data collaboration platforms  
 6. Charisma\! Unique and exciting education, career, and life experience to expand the intellectual and cultural variety of our team  
 7. Aptitude and desire to work with and mentor junior technical talent  
 8. Experience building effective and efficient solutions in AWS, utilizing Terraform and/or CloudFormation to build infrastructure as code  
@@ -38,11 +38,6 @@ You will be a member of an data insights and tooling team, and responsible for b
 
 None
 
-**Interview Process / Next Steps**
-
-1. 1 round interview with hiring manager  
-2. 2nd round panel interview with manager and engineering lead
-
 **Additional Notes**
 
-Remote hiring \- Remote.  
+Remote.  
